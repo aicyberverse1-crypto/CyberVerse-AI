@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * CyberVerse AI - Hacker vs Defender Simulator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 export interface HealthStatus {
   status: string;
@@ -13,9 +13,18 @@ export interface ErrorResponse {
   error: string;
 }
 
+export type RegisterBodyHackerType =
+  (typeof RegisterBodyHackerType)[keyof typeof RegisterBodyHackerType];
+
+export const RegisterBodyHackerType = {
+  defender: "defender",
+  attacker: "attacker",
+} as const;
+
 export interface RegisterBody {
   username: string;
   password: string;
+  hackerType?: RegisterBodyHackerType;
 }
 
 export interface LoginBody {
@@ -29,12 +38,42 @@ export interface UserProfile {
   xp: number;
   level: number;
   totalScore: number;
+  hintPoints: number;
+  hackerType: string;
+  skillPoints: number;
+  unlockedSkills: string[];
+  rankTier: string;
+  accuracyRate: number;
+  streakDays: number;
+  dailyScore: number;
+  isTopHacker: boolean;
+  /** @nullable */
+  lastClaimedAt: string | null;
   createdAt: string;
 }
 
 export interface AuthResponse {
   token: string;
   user: UserProfile;
+}
+
+export type SetHackerTypeBodyHackerType =
+  (typeof SetHackerTypeBodyHackerType)[keyof typeof SetHackerTypeBodyHackerType];
+
+export const SetHackerTypeBodyHackerType = {
+  defender: "defender",
+  attacker: "attacker",
+} as const;
+
+export interface SetHackerTypeBody {
+  hackerType: SetHackerTypeBodyHackerType;
+}
+
+export interface DailyClaimResult {
+  hintPointsEarned: number;
+  streakDays: number;
+  totalHintPoints: number;
+  message: string;
 }
 
 export interface Question {
@@ -51,8 +90,9 @@ export interface SubmitScoreBody {
   mode: string;
   score: number;
   xpEarned: number;
+  isCorrect: boolean;
   /** @nullable */
-  questionId?: number | null;
+  responseTimeMs?: number | null;
 }
 
 export interface ScoreResult {
@@ -60,14 +100,23 @@ export interface ScoreResult {
   xp: number;
   level: number;
   leveledUp: boolean;
+  hintPoints: number;
+  hintPointsEarned: number;
+  rankTier: string;
+  skillPoints: number;
+  newSkillPoint: boolean;
 }
 
 export interface LeaderboardEntry {
   rank: number;
   username: string;
   totalScore: number;
+  dailyScore: number;
   xp: number;
   level: number;
+  rankTier: string;
+  hackerType: string;
+  isTopHacker: boolean;
 }
 
 export interface ActivityItem {
@@ -89,17 +138,125 @@ export interface DashboardStats {
   escapeScore: number;
   /** @nullable */
   rank: number | null;
+  hintPoints: number;
+  rankTier: string;
+  accuracyRate: number;
+  streakDays: number;
+  dailyScore: number;
   recentActivity: ActivityItem[];
 }
+
+export type SkillType = (typeof SkillType)[keyof typeof SkillType];
+
+export const SkillType = {
+  defender: "defender",
+  attacker: "attacker",
+} as const;
+
+export interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  type: SkillType;
+  cost: number;
+  effect: string;
+  icon: string;
+}
+
+export interface SkillsResponse {
+  skills: Skill[];
+  unlockedSkills: string[];
+  skillPoints: number;
+  hackerType: string;
+}
+
+export interface UnlockSkillBody {
+  skillId: string;
+}
+
+export interface UnlockSkillResult {
+  success: boolean;
+  skillPoints: number;
+  unlockedSkills: string[];
+  message: string;
+}
+
+export interface MissionObjective {
+  text: string;
+  xpReward: number;
+}
+
+export type MissionRewards = {
+  xp: number;
+  score: number;
+  hintPoints: number;
+};
+
+export interface Mission {
+  title: string;
+  scenario: string;
+  difficulty: string;
+  objectives: MissionObjective[];
+  hints: string[];
+  rewards: MissionRewards;
+  hackerType: string;
+}
+
+export type MultiplayerChallengeBodyOpponentDifficulty =
+  (typeof MultiplayerChallengeBodyOpponentDifficulty)[keyof typeof MultiplayerChallengeBodyOpponentDifficulty];
+
+export const MultiplayerChallengeBodyOpponentDifficulty = {
+  easy: "easy",
+  medium: "medium",
+  hard: "hard",
+  expert: "expert",
+} as const;
+
+export interface MultiplayerChallengeBody {
+  mode: string;
+  opponentDifficulty: MultiplayerChallengeBodyOpponentDifficulty;
+}
+
+export type MultiplayerResultWinner =
+  (typeof MultiplayerResultWinner)[keyof typeof MultiplayerResultWinner];
+
+export const MultiplayerResultWinner = {
+  player: "player",
+  opponent: "opponent",
+  draw: "draw",
+} as const;
+
+export interface MultiplayerResult {
+  playerScore: number;
+  opponentScore: number;
+  opponentName: string;
+  winner: MultiplayerResultWinner;
+  xpEarned: number;
+  hintPointsEarned: number;
+  message: string;
+}
+
+export type AiHintBodyDifficulty =
+  (typeof AiHintBodyDifficulty)[keyof typeof AiHintBodyDifficulty];
+
+export const AiHintBodyDifficulty = {
+  easy: "easy",
+  medium: "medium",
+  hard: "hard",
+  expert: "expert",
+} as const;
 
 export interface AiHintBody {
   scenario: string;
   question: string;
   mode: string;
+  difficulty?: AiHintBodyDifficulty;
 }
 
 export interface AiHintResponse {
   hint: string;
+  hintPointsCost: number;
+  hintPointsRemaining: number;
 }
 
 export interface AiChatBody {
@@ -129,4 +286,14 @@ export const GetQuestionsMode = {
 
 export type GetLeaderboardParams = {
   limit?: number;
+  filter?: GetLeaderboardFilter;
 };
+
+export type GetLeaderboardFilter =
+  (typeof GetLeaderboardFilter)[keyof typeof GetLeaderboardFilter];
+
+export const GetLeaderboardFilter = {
+  daily: "daily",
+  weekly: "weekly",
+  "all-time": "all-time",
+} as const;

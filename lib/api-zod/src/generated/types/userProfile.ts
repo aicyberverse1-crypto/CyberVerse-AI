@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * CyberVerse AI - Hacker vs Defender Simulator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
 export interface UserProfile {
@@ -12,5 +12,16 @@ export interface UserProfile {
   xp: number;
   level: number;
   totalScore: number;
+  hintPoints: number;
+  hackerType: string;
+  skillPoints: number;
+  unlockedSkills: string[];
+  rankTier: string;
+  accuracyRate: number;
+  streakDays: number;
+  dailyScore: number;
+  isTopHacker: boolean;
+  /** @nullable */
+  lastClaimedAt: string | null;
   createdAt: string;
 }

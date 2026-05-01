@@ -3,10 +3,12 @@
  * Do not edit manually.
  * Api
  * CyberVerse AI - Hacker vs Defender Simulator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
+import type { RegisterBodyHackerType } from "./registerBodyHackerType";
 
 export interface RegisterBody {
   username: string;
   password: string;
+  hackerType?: RegisterBodyHackerType;
 }

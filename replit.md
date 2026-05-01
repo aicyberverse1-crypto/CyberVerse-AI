@@ -2,7 +2,7 @@
 
 ## Overview
 
-Full-stack cybersecurity simulation platform. Players train through 4 game modes (Phishing Detective, Attack Defense, Secure Builder, Escape Room), earn XP/levels, chat with an AI cybersecurity mentor, and compete on a global leaderboard.
+Full-stack cybersecurity simulation platform. Players train through 6 game modes, earn XP/levels/hint points, compete on a global leaderboard, unlock skills in a branching skill tree, complete AI-generated missions, and battle AI opponents in multiplayer mode.
 
 ## Stack
 
@@ -10,11 +10,11 @@ Full-stack cybersecurity simulation platform. Players train through 4 game modes
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **Frontend**: React + Vite (artifacts/cyberverse) — dark cyberpunk theme, Tailwind CSS, framer-motion
+- **Frontend**: React + Vite (artifacts/cyberverse) — dark cyberpunk theme, Tailwind CSS, framer-motion, Web Audio API
 - **API framework**: Express 5 (artifacts/api-server)
 - **Database**: PostgreSQL + Drizzle ORM
 - **Auth**: JWT (bcryptjs + jsonwebtoken), SESSION_SECRET env var
-- **AI**: OpenAI via Replit AI integration (gpt-4o-mini), AI hint + AI chat routes
+- **AI**: OpenAI via Replit AI integration (gpt-4o-mini), AI hint + AI chat + AI mission generation routes
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec → React Query hooks + Zod schemas)
 - **Build**: esbuild (CJS bundle)
@@ -22,31 +22,79 @@ Full-stack cybersecurity simulation platform. Players train through 4 game modes
 ## Key Pages
 
 - `/login` — JWT auth login
-- `/register` — new operator registration
-- `/dashboard` — XP/level stats, mode select, risk meter, recent activity
-- `/phishing` — Phishing Detective quiz with AI hints
-- `/defense` — Attack Defense (timed quiz)
+- `/register` — 2-step new operator registration (credentials + hacker type selection)
+- `/dashboard` — XP/level/rank stats, daily bonus claim, streak display, mode select, risk meter, recent activity
+- `/phishing` — Phishing Detective quiz with AI hints (hint cost display, glitch/flash effects)
+- `/defense` — Attack Defense (timed quiz, audio timer alerts)
 - `/builder` — Secure Builder (password strength + 2FA simulator)
-- `/escape` — Escape Room (timed cryptographic puzzles)
-- `/ai-assistant` — Full AI chat with CyberGuard AI
-- `/leaderboard` — global rankings with podium
+- `/escape` — Escape Room (timed cryptographic puzzles, multi-level hints)
+- `/skill-tree` — Skill tree with Defender/Attacker paths, skill unlock with skill points
+- `/missions` — AI-generated missions tailored to hacker type and performance
+- `/multiplayer` — Challenge AI opponents of varying difficulty across all modes
+- `/ai-assistant` — AI chat assistant (CyberGuard AI)
+- `/leaderboard` — Global rankings with daily/weekly/all-time filters, rank badges, Top Hacker crown
 
-## Key Files
+## Core Systems
 
-- `artifacts/api-server/src/routes/` — all API routes
-- `artifacts/cyberverse/src/pages/` — all frontend pages
-- `artifacts/cyberverse/src/components/layout/AppLayout.tsx` — sidebar + navbar
-- `artifacts/cyberverse/src/components/AiChatWidget.tsx` — floating AI chat
-- `lib/api-spec/openapi.yaml` — OpenAPI spec (source of truth)
-- `lib/api-client-react/src/generated/api.ts` — generated React Query hooks
-- `lib/db/src/schema.ts` — PostgreSQL schema (users, questions, scores)
+### Hint Point Economy
+- New users start with 500 hint points
+- Hint costs per difficulty: Easy=10 HP, Medium=15 HP, Hard=25 HP, Expert=40 HP
+- Earn hint points by submitting correct answers and leveling up
+- Daily bonus claims add hint points (streak system multiplies rewards)
 
-## Key Commands
+### Rank Tier System
+- Bronze (0+ total score), Silver (500+), Gold (1500+), Platinum (3000+), Diamond (6000+), Elite Hacker (10000+)
+- Displayed in navbar, sidebar, and leaderboard
 
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
+### Skill Tree
+- Two paths: Defender (Blue Team) and Attacker (Red Team)
+- Skills cost Skill Points (earned 1 per level up at 100 XP each)
+- 10 skills per path with unique effects (Firewall Boost, Exploit Mastery, etc.)
+- Hacker type can be switched; affects mission generation and skill visibility
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+### Daily Bonus & Streak
+- POST `/api/user/daily-claim` awards hint points per day
+- Login streaks tracked (Day 7 gives larger bonus)
+- Resets daily with lastClaimedAt / lastLoginAt tracking
+
+### Multiplayer vs AI
+- Choose mode + opponent difficulty (easy/medium/hard/expert)
+- Simulated AI battle with win/draw/loss rewards in XP and hint points
+
+### AI Missions
+- Generated by GPT-4o-mini based on hacker type, level, and accuracy
+- Objectives, hints, and rewards structure
+- Submits score on completion
+
+### Audio System
+- Web Audio API synthetic sounds (useAudio.ts hook)
+- Events: success, error, levelUp, victory, hint, alert, timer, typing
+
+## Key API Routes
+
+- `POST /api/auth/register` — creates user with `hackerType`, starts with 500 hintPoints
+- `POST /api/auth/login` — updates streak on login
+- `GET /api/user` — full user profile incl. hintPoints, rankTier, streakDays, hackerType
+- `POST /api/user/daily-claim` — claim daily bonus
+- `POST /api/user/hacker-type` — set/change hacker type
+- `GET /api/skills` — list skills + user's unlocked skills + skill points
+- `POST /api/skills/unlock` — unlock a skill (costs skill points)
+- `POST /api/missions/generate` — AI generates a mission
+- `POST /api/multiplayer/challenge` — simulate vs AI match
+- `POST /api/score` — submit score with isCorrect + responseTimeMs
+- `GET /api/leaderboard?filter=daily|weekly|all-time&limit=N`
+- `GET /api/stats/dashboard` — full dashboard stats
+- `POST /api/ai/hint` — deducts hint points, returns AI hint
+- `POST /api/ai/chat` — free-form AI chat
+
+## DB Schema Key Fields
+
+Users table additions: `hintPoints`, `hackerType`, `skillPoints`, `unlockedSkills`, `rankTier`, `accuracyRate`, `totalAnswers`, `correctAnswers`, `averageResponseTime`, `streakDays`, `lastClaimedAt`, `lastLoginAt`, `dailyScore`, `lastDailyReset`, `isTopHacker`
+
+## Architecture Notes
+
+- API spec lives in `lib/api-spec/openapi.yaml`
+- Generated hooks in `lib/api-client-react/src/generated/api.ts`
+- Generated schemas in `lib/api-client-react/src/generated/api.schemas.ts`
+- Run codegen: `pnpm --filter @workspace/api-spec run codegen`
+- User profile helpers: `artifacts/api-server/src/lib/userProfile.ts` (serializeUser, getRankTier, HINT_COSTS)

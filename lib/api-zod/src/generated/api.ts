@@ -3,12 +3,11 @@
  * Do not edit manually.
  * Api
  * CyberVerse AI - Hacker vs Defender Simulator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -21,6 +20,7 @@ export const HealthCheckResponse = zod.object({
 export const RegisterBody = zod.object({
   username: zod.string(),
   password: zod.string(),
+  hackerType: zod.enum(["defender", "attacker"]).optional(),
 });
 
 /**
@@ -39,6 +39,16 @@ export const LoginResponse = zod.object({
     xp: zod.number(),
     level: zod.number(),
     totalScore: zod.number(),
+    hintPoints: zod.number(),
+    hackerType: zod.string(),
+    skillPoints: zod.number(),
+    unlockedSkills: zod.array(zod.string()),
+    rankTier: zod.string(),
+    accuracyRate: zod.number(),
+    streakDays: zod.number(),
+    dailyScore: zod.number(),
+    isTopHacker: zod.boolean(),
+    lastClaimedAt: zod.string().nullable(),
     createdAt: zod.string(),
   }),
 });
@@ -52,7 +62,53 @@ export const GetUserResponse = zod.object({
   xp: zod.number(),
   level: zod.number(),
   totalScore: zod.number(),
+  hintPoints: zod.number(),
+  hackerType: zod.string(),
+  skillPoints: zod.number(),
+  unlockedSkills: zod.array(zod.string()),
+  rankTier: zod.string(),
+  accuracyRate: zod.number(),
+  streakDays: zod.number(),
+  dailyScore: zod.number(),
+  isTopHacker: zod.boolean(),
+  lastClaimedAt: zod.string().nullable(),
   createdAt: zod.string(),
+});
+
+/**
+ * @summary Set hacker type (Defender or Attacker)
+ */
+export const SetHackerTypeBody = zod.object({
+  hackerType: zod.enum(["defender", "attacker"]),
+});
+
+export const SetHackerTypeResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  xp: zod.number(),
+  level: zod.number(),
+  totalScore: zod.number(),
+  hintPoints: zod.number(),
+  hackerType: zod.string(),
+  skillPoints: zod.number(),
+  unlockedSkills: zod.array(zod.string()),
+  rankTier: zod.string(),
+  accuracyRate: zod.number(),
+  streakDays: zod.number(),
+  dailyScore: zod.number(),
+  isTopHacker: zod.boolean(),
+  lastClaimedAt: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Claim daily hint point bonus
+ */
+export const ClaimDailyBonusResponse = zod.object({
+  hintPointsEarned: zod.number(),
+  streakDays: zod.number(),
+  totalHintPoints: zod.number(),
+  message: zod.string(),
 });
 
 /**
@@ -81,7 +137,8 @@ export const SubmitScoreBody = zod.object({
   mode: zod.string(),
   score: zod.number(),
   xpEarned: zod.number(),
-  questionId: zod.number().nullish(),
+  isCorrect: zod.boolean(),
+  responseTimeMs: zod.number().nullish(),
 });
 
 export const SubmitScoreResponse = zod.object({
@@ -89,6 +146,11 @@ export const SubmitScoreResponse = zod.object({
   xp: zod.number(),
   level: zod.number(),
   leveledUp: zod.boolean(),
+  hintPoints: zod.number(),
+  hintPointsEarned: zod.number(),
+  rankTier: zod.string(),
+  skillPoints: zod.number(),
+  newSkillPoint: zod.boolean(),
 });
 
 /**
@@ -96,14 +158,19 @@ export const SubmitScoreResponse = zod.object({
  */
 export const GetLeaderboardQueryParams = zod.object({
   limit: zod.coerce.number().optional(),
+  filter: zod.enum(["daily", "weekly", "all-time"]).optional(),
 });
 
 export const GetLeaderboardResponseItem = zod.object({
   rank: zod.number(),
   username: zod.string(),
   totalScore: zod.number(),
+  dailyScore: zod.number(),
   xp: zod.number(),
   level: zod.number(),
+  rankTier: zod.string(),
+  hackerType: zod.string(),
+  isTopHacker: zod.boolean(),
 });
 export const GetLeaderboardResponse = zod.array(GetLeaderboardResponseItem);
 
@@ -121,6 +188,11 @@ export const GetDashboardStatsResponse = zod.object({
   builderScore: zod.number(),
   escapeScore: zod.number(),
   rank: zod.number().nullable(),
+  hintPoints: zod.number(),
+  rankTier: zod.string(),
+  accuracyRate: zod.number(),
+  streakDays: zod.number(),
+  dailyScore: zod.number(),
   recentActivity: zod.array(
     zod.object({
       mode: zod.string(),
@@ -132,16 +204,93 @@ export const GetDashboardStatsResponse = zod.object({
 });
 
 /**
- * @summary Get an AI hint for a scenario
+ * @summary Get all skills and user unlock status
+ */
+export const GetSkillsResponse = zod.object({
+  skills: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      description: zod.string(),
+      type: zod.enum(["defender", "attacker"]),
+      cost: zod.number(),
+      effect: zod.string(),
+      icon: zod.string(),
+    }),
+  ),
+  unlockedSkills: zod.array(zod.string()),
+  skillPoints: zod.number(),
+  hackerType: zod.string(),
+});
+
+/**
+ * @summary Unlock a skill using skill points
+ */
+export const UnlockSkillBody = zod.object({
+  skillId: zod.string(),
+});
+
+export const UnlockSkillResponse = zod.object({
+  success: zod.boolean(),
+  skillPoints: zod.number(),
+  unlockedSkills: zod.array(zod.string()),
+  message: zod.string(),
+});
+
+/**
+ * @summary AI-generate a custom mission based on player profile
+ */
+export const GenerateMissionResponse = zod.object({
+  title: zod.string(),
+  scenario: zod.string(),
+  difficulty: zod.string(),
+  objectives: zod.array(
+    zod.object({
+      text: zod.string(),
+      xpReward: zod.number(),
+    }),
+  ),
+  hints: zod.array(zod.string()),
+  rewards: zod.object({
+    xp: zod.number(),
+    score: zod.number(),
+    hintPoints: zod.number(),
+  }),
+  hackerType: zod.string(),
+});
+
+/**
+ * @summary Start a multiplayer challenge (vs AI opponent)
+ */
+export const StartMultiplayerChallengeBody = zod.object({
+  mode: zod.string(),
+  opponentDifficulty: zod.enum(["easy", "medium", "hard", "expert"]),
+});
+
+export const StartMultiplayerChallengeResponse = zod.object({
+  playerScore: zod.number(),
+  opponentScore: zod.number(),
+  opponentName: zod.string(),
+  winner: zod.enum(["player", "opponent", "draw"]),
+  xpEarned: zod.number(),
+  hintPointsEarned: zod.number(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Get an AI hint for a scenario (costs hint points)
  */
 export const GetAiHintBody = zod.object({
   scenario: zod.string(),
   question: zod.string(),
   mode: zod.string(),
+  difficulty: zod.enum(["easy", "medium", "hard", "expert"]).optional(),
 });
 
 export const GetAiHintResponse = zod.object({
   hint: zod.string(),
+  hintPointsCost: zod.number(),
+  hintPointsRemaining: zod.number(),
 });
 
 /**

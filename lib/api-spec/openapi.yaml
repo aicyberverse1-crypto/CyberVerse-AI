@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
+  version: 0.2.0
   description: CyberVerse AI - Hacker vs Defender Simulator API
 servers:
   - url: /api
@@ -22,13 +22,18 @@ tags:
     description: Leaderboard operations
   - name: ai
     description: AI assistant operations
+  - name: skills
+    description: Skill tree operations
+  - name: missions
+    description: AI-generated missions
+  - name: multiplayer
+    description: Multiplayer challenge operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -112,6 +117,56 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /user/hacker-type:
+    post:
+      operationId: setHackerType
+      tags: [users]
+      summary: Set hacker type (Defender or Attacker)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetHackerTypeBody"
+      responses:
+        "200":
+          description: Hacker type updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /user/daily-claim:
+    post:
+      operationId: claimDailyBonus
+      tags: [users]
+      summary: Claim daily hint point bonus
+      responses:
+        "200":
+          description: Daily bonus claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyClaimResult"
+        "400":
+          description: Already claimed today
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /questions:
     get:
       operationId: getQuestions
@@ -175,6 +230,12 @@ paths:
           required: false
           schema:
             type: integer
+        - name: filter
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [daily, weekly, all-time]
       responses:
         "200":
           description: Leaderboard
@@ -204,11 +265,105 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /skills:
+    get:
+      operationId: getSkills
+      tags: [skills]
+      summary: Get all skills and user unlock status
+      responses:
+        "200":
+          description: Skills data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /skills/unlock:
+    post:
+      operationId: unlockSkill
+      tags: [skills]
+      summary: Unlock a skill using skill points
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnlockSkillBody"
+      responses:
+        "200":
+          description: Skill unlocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnlockSkillResult"
+        "400":
+          description: Not enough skill points or already unlocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /missions/generate:
+    post:
+      operationId: generateMission
+      tags: [missions]
+      summary: AI-generate a custom mission based on player profile
+      responses:
+        "200":
+          description: Generated mission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mission"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /multiplayer/challenge:
+    post:
+      operationId: startMultiplayerChallenge
+      tags: [multiplayer]
+      summary: Start a multiplayer challenge (vs AI opponent)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MultiplayerChallengeBody"
+      responses:
+        "200":
+          description: Challenge result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MultiplayerResult"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /ai/hint:
     post:
       operationId: getAiHint
       tags: [ai]
-      summary: Get an AI hint for a scenario
+      summary: Get an AI hint for a scenario (costs hint points)
       requestBody:
         required: true
         content:
@@ -222,6 +377,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AiHintResponse"
+        "402":
+          description: Not enough hint points
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
           content:
@@ -279,6 +440,9 @@ components:
           type: string
         password:
           type: string
+        hackerType:
+          type: string
+          enum: [defender, attacker]
       required:
         - username
         - password
@@ -305,6 +469,15 @@ components:
         - token
         - user
 
+    SetHackerTypeBody:
+      type: object
+      properties:
+        hackerType:
+          type: string
+          enum: [defender, attacker]
+      required:
+        - hackerType
+
     UserProfile:
       type: object
       properties:
@@ -318,6 +491,28 @@ components:
           type: integer
         totalScore:
           type: integer
+        hintPoints:
+          type: integer
+        hackerType:
+          type: string
+        skillPoints:
+          type: integer
+        unlockedSkills:
+          type: array
+          items:
+            type: string
+        rankTier:
+          type: string
+        accuracyRate:
+          type: number
+        streakDays:
+          type: integer
+        dailyScore:
+          type: integer
+        isTopHacker:
+          type: boolean
+        lastClaimedAt:
+          type: ["string", "null"]
         createdAt:
           type: string
       required:
@@ -326,7 +521,34 @@ components:
         - xp
         - level
         - totalScore
+        - hintPoints
+        - hackerType
+        - skillPoints
+        - unlockedSkills
+        - rankTier
+        - accuracyRate
+        - streakDays
+        - dailyScore
+        - isTopHacker
+        - lastClaimedAt
         - createdAt
+
+    DailyClaimResult:
+      type: object
+      properties:
+        hintPointsEarned:
+          type: integer
+        streakDays:
+          type: integer
+        totalHintPoints:
+          type: integer
+        message:
+          type: string
+      required:
+        - hintPointsEarned
+        - streakDays
+        - totalHintPoints
+        - message
 
     Question:
       type: object
@@ -365,12 +587,15 @@ components:
           type: integer
         xpEarned:
           type: integer
-        questionId:
+        isCorrect:
+          type: boolean
+        responseTimeMs:
           type: ["integer", "null"]
       required:
         - mode
         - score
         - xpEarned
+        - isCorrect
 
     ScoreResult:
       type: object
@@ -383,11 +608,26 @@ components:
           type: integer
         leveledUp:
           type: boolean
+        hintPoints:
+          type: integer
+        hintPointsEarned:
+          type: integer
+        rankTier:
+          type: string
+        skillPoints:
+          type: integer
+        newSkillPoint:
+          type: boolean
       required:
         - totalScore
         - xp
         - level
         - leveledUp
+        - hintPoints
+        - hintPointsEarned
+        - rankTier
+        - skillPoints
+        - newSkillPoint
 
     LeaderboardEntry:
       type: object
@@ -398,16 +638,28 @@ components:
           type: string
         totalScore:
           type: integer
+        dailyScore:
+          type: integer
         xp:
           type: integer
         level:
           type: integer
+        rankTier:
+          type: string
+        hackerType:
+          type: string
+        isTopHacker:
+          type: boolean
       required:
         - rank
         - username
         - totalScore
+        - dailyScore
         - xp
         - level
+        - rankTier
+        - hackerType
+        - isTopHacker
 
     DashboardStats:
       type: object
@@ -432,6 +684,16 @@ components:
           type: integer
         rank:
           type: ["integer", "null"]
+        hintPoints:
+          type: integer
+        rankTier:
+          type: string
+        accuracyRate:
+          type: number
+        streakDays:
+          type: integer
+        dailyScore:
+          type: integer
         recentActivity:
           type: array
           items:
@@ -447,6 +709,11 @@ components:
         - builderScore
         - escapeScore
         - rank
+        - hintPoints
+        - rankTier
+        - accuracyRate
+        - streakDays
+        - dailyScore
         - recentActivity
 
     ActivityItem:
@@ -466,6 +733,172 @@ components:
         - xpEarned
         - createdAt
 
+    Skill:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [defender, attacker]
+        cost:
+          type: integer
+        effect:
+          type: string
+        icon:
+          type: string
+      required:
+        - id
+        - name
+        - description
+        - type
+        - cost
+        - effect
+        - icon
+
+    SkillsResponse:
+      type: object
+      properties:
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Skill"
+        unlockedSkills:
+          type: array
+          items:
+            type: string
+        skillPoints:
+          type: integer
+        hackerType:
+          type: string
+      required:
+        - skills
+        - unlockedSkills
+        - skillPoints
+        - hackerType
+
+    UnlockSkillBody:
+      type: object
+      properties:
+        skillId:
+          type: string
+      required:
+        - skillId
+
+    UnlockSkillResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        skillPoints:
+          type: integer
+        unlockedSkills:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+      required:
+        - success
+        - skillPoints
+        - unlockedSkills
+        - message
+
+    MissionObjective:
+      type: object
+      properties:
+        text:
+          type: string
+        xpReward:
+          type: integer
+      required:
+        - text
+        - xpReward
+
+    Mission:
+      type: object
+      properties:
+        title:
+          type: string
+        scenario:
+          type: string
+        difficulty:
+          type: string
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/MissionObjective"
+        hints:
+          type: array
+          items:
+            type: string
+        rewards:
+          type: object
+          properties:
+            xp:
+              type: integer
+            score:
+              type: integer
+            hintPoints:
+              type: integer
+          required:
+            - xp
+            - score
+            - hintPoints
+        hackerType:
+          type: string
+      required:
+        - title
+        - scenario
+        - difficulty
+        - objectives
+        - hints
+        - rewards
+        - hackerType
+
+    MultiplayerChallengeBody:
+      type: object
+      properties:
+        mode:
+          type: string
+        opponentDifficulty:
+          type: string
+          enum: [easy, medium, hard, expert]
+      required:
+        - mode
+        - opponentDifficulty
+
+    MultiplayerResult:
+      type: object
+      properties:
+        playerScore:
+          type: integer
+        opponentScore:
+          type: integer
+        opponentName:
+          type: string
+        winner:
+          type: string
+          enum: [player, opponent, draw]
+        xpEarned:
+          type: integer
+        hintPointsEarned:
+          type: integer
+        message:
+          type: string
+      required:
+        - playerScore
+        - opponentScore
+        - opponentName
+        - winner
+        - xpEarned
+        - hintPointsEarned
+        - message
+
     AiHintBody:
       type: object
       properties:
@@ -475,6 +908,9 @@ components:
           type: string
         mode:
           type: string
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, expert]
       required:
         - scenario
         - question
@@ -485,8 +921,14 @@ components:
       properties:
         hint:
           type: string
+        hintPointsCost:
+          type: integer
+        hintPointsRemaining:
+          type: integer
       required:
         - hint
+        - hintPointsCost
+        - hintPointsRemaining
 
     AiChatBody:
       type: object

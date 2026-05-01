@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * CyberVerse AI - Hacker vs Defender Simulator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import type { ActivityItem } from "./activityItem";
 
@@ -19,5 +19,10 @@ export interface DashboardStats {
   escapeScore: number;
   /** @nullable */
   rank: number | null;
+  hintPoints: number;
+  rankTier: string;
+  accuracyRate: number;
+  streakDays: number;
+  dailyScore: number;
   recentActivity: ActivityItem[];
 }

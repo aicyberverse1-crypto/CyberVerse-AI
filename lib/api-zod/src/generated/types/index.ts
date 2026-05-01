@@ -3,25 +3,43 @@
  * Do not edit manually.
  * Api
  * CyberVerse AI - Hacker vs Defender Simulator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
 export * from "./activityItem";
 export * from "./aiChatBody";
 export * from "./aiChatResponse";
 export * from "./aiHintBody";
+export * from "./aiHintBodyDifficulty";
 export * from "./aiHintResponse";
 export * from "./authResponse";
+export * from "./dailyClaimResult";
 export * from "./dashboardStats";
 export * from "./errorResponse";
+export * from "./getLeaderboardFilter";
 export * from "./getLeaderboardParams";
 export * from "./getQuestionsMode";
 export * from "./getQuestionsParams";
 export * from "./healthStatus";
 export * from "./leaderboardEntry";
 export * from "./loginBody";
+export * from "./mission";
+export * from "./missionObjective";
+export * from "./missionRewards";
+export * from "./multiplayerChallengeBody";
+export * from "./multiplayerChallengeBodyOpponentDifficulty";
+export * from "./multiplayerResult";
+export * from "./multiplayerResultWinner";
 export * from "./question";
 export * from "./registerBody";
+export * from "./registerBodyHackerType";
 export * from "./scoreResult";
+export * from "./setHackerTypeBody";
+export * from "./setHackerTypeBodyHackerType";
+export * from "./skill";
+export * from "./skillsResponse";
+export * from "./skillType";
 export * from "./submitScoreBody";
+export * from "./unlockSkillBody";
+export * from "./unlockSkillResult";
 export * from "./userProfile";

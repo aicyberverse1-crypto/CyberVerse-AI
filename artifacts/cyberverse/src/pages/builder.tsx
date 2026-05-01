@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Lock, Shield, CheckCircle, XCircle, Bot, Eye, EyeOff, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { audioEffects } from "@/hooks/useAudio";
+import { useQueryClient } from "@tanstack/react-query";
 
 type PasswordStrength = "very-weak" | "weak" | "medium" | "strong" | "very-strong";
 
@@ -31,6 +33,7 @@ function checkStrength(pw: string): { strength: PasswordStrength; score: number;
 
 export default function Builder() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [twoFa, setTwoFa] = useState(false);
@@ -46,6 +49,7 @@ export default function Builder() {
 
   function simulateHack() {
     if (!password) {
+      audioEffects.error();
       toast({ title: "Error", description: "Set a password first", variant: "destructive" });
       return;
     }
@@ -57,9 +61,27 @@ export default function Builder() {
     setHackResult(hackSucceeds ? "success" : "failed");
     setSubmitted(true);
 
+    if (!hackSucceeds) {
+      audioEffects.success();
+    } else {
+      audioEffects.error();
+    }
+
     const pts = hackSucceeds ? 10 : (twoFa && strength.strength === "very-strong" ? 200 : 100);
     const xp = hackSucceeds ? 5 : (twoFa ? 40 : 20);
-    submitScore.mutate({ data: { mode: "builder", score: pts, xpEarned: xp } });
+    const isCorrect = !hackSucceeds;
+    submitScore.mutate(
+      { data: { mode: "builder", score: pts, xpEarned: xp, isCorrect } },
+      {
+        onSuccess: (data) => {
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          if (data.leveledUp) {
+            audioEffects.levelUp();
+            toast({ title: "LEVEL UP!", description: `Now Level ${data.level}!` });
+          }
+        },
+      }
+    );
 
     sendChat.mutate(
       {

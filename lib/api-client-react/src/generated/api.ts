@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * CyberVerse AI - Hacker vs Defender Simulator API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
@@ -22,6 +22,7 @@ import type {
   AiHintBody,
   AiHintResponse,
   AuthResponse,
+  DailyClaimResult,
   DashboardStats,
   ErrorResponse,
   GetLeaderboardParams,
@@ -29,10 +30,17 @@ import type {
   HealthStatus,
   LeaderboardEntry,
   LoginBody,
+  Mission,
+  MultiplayerChallengeBody,
+  MultiplayerResult,
   Question,
   RegisterBody,
   ScoreResult,
+  SetHackerTypeBody,
+  SkillsResponse,
   SubmitScoreBody,
+  UnlockSkillBody,
+  UnlockSkillResult,
   UserProfile,
 } from "./api.schemas";
 
@@ -46,7 +54,6 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const getHealthCheckUrl = () => {
@@ -357,6 +364,173 @@ export function useGetUser<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Set hacker type (Defender or Attacker)
+ */
+export const getSetHackerTypeUrl = () => {
+  return `/api/user/hacker-type`;
+};
+
+export const setHackerType = async (
+  setHackerTypeBody: SetHackerTypeBody,
+  options?: RequestInit,
+): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getSetHackerTypeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setHackerTypeBody),
+  });
+};
+
+export const getSetHackerTypeMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setHackerType>>,
+    TError,
+    { data: BodyType<SetHackerTypeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setHackerType>>,
+  TError,
+  { data: BodyType<SetHackerTypeBody> },
+  TContext
+> => {
+  const mutationKey = ["setHackerType"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setHackerType>>,
+    { data: BodyType<SetHackerTypeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return setHackerType(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetHackerTypeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setHackerType>>
+>;
+export type SetHackerTypeMutationBody = BodyType<SetHackerTypeBody>;
+export type SetHackerTypeMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Set hacker type (Defender or Attacker)
+ */
+export const useSetHackerType = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setHackerType>>,
+    TError,
+    { data: BodyType<SetHackerTypeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof setHackerType>>,
+  TError,
+  { data: BodyType<SetHackerTypeBody> },
+  TContext
+> => {
+  return useMutation(getSetHackerTypeMutationOptions(options));
+};
+
+/**
+ * @summary Claim daily hint point bonus
+ */
+export const getClaimDailyBonusUrl = () => {
+  return `/api/user/daily-claim`;
+};
+
+export const claimDailyBonus = async (
+  options?: RequestInit,
+): Promise<DailyClaimResult> => {
+  return customFetch<DailyClaimResult>(getClaimDailyBonusUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getClaimDailyBonusMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof claimDailyBonus>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof claimDailyBonus>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["claimDailyBonus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof claimDailyBonus>>,
+    void
+  > = () => {
+    return claimDailyBonus(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ClaimDailyBonusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof claimDailyBonus>>
+>;
+
+export type ClaimDailyBonusMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Claim daily hint point bonus
+ */
+export const useClaimDailyBonus = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof claimDailyBonus>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof claimDailyBonus>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getClaimDailyBonusMutationOptions(options));
+};
 
 /**
  * @summary Get questions for a game mode
@@ -708,7 +882,328 @@ export function useGetDashboardStats<
 }
 
 /**
- * @summary Get an AI hint for a scenario
+ * @summary Get all skills and user unlock status
+ */
+export const getGetSkillsUrl = () => {
+  return `/api/skills`;
+};
+
+export const getSkills = async (
+  options?: RequestInit,
+): Promise<SkillsResponse> => {
+  return customFetch<SkillsResponse>(getGetSkillsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSkillsQueryKey = () => {
+  return [`/api/skills`] as const;
+};
+
+export const getGetSkillsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSkills>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getSkills>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetSkillsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSkills>>> = ({
+    signal,
+  }) => getSkills({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSkills>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSkillsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSkills>>
+>;
+export type GetSkillsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get all skills and user unlock status
+ */
+
+export function useGetSkills<
+  TData = Awaited<ReturnType<typeof getSkills>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getSkills>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSkillsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Unlock a skill using skill points
+ */
+export const getUnlockSkillUrl = () => {
+  return `/api/skills/unlock`;
+};
+
+export const unlockSkill = async (
+  unlockSkillBody: UnlockSkillBody,
+  options?: RequestInit,
+): Promise<UnlockSkillResult> => {
+  return customFetch<UnlockSkillResult>(getUnlockSkillUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(unlockSkillBody),
+  });
+};
+
+export const getUnlockSkillMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlockSkill>>,
+    TError,
+    { data: BodyType<UnlockSkillBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unlockSkill>>,
+  TError,
+  { data: BodyType<UnlockSkillBody> },
+  TContext
+> => {
+  const mutationKey = ["unlockSkill"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unlockSkill>>,
+    { data: BodyType<UnlockSkillBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return unlockSkill(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnlockSkillMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unlockSkill>>
+>;
+export type UnlockSkillMutationBody = BodyType<UnlockSkillBody>;
+export type UnlockSkillMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Unlock a skill using skill points
+ */
+export const useUnlockSkill = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlockSkill>>,
+    TError,
+    { data: BodyType<UnlockSkillBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unlockSkill>>,
+  TError,
+  { data: BodyType<UnlockSkillBody> },
+  TContext
+> => {
+  return useMutation(getUnlockSkillMutationOptions(options));
+};
+
+/**
+ * @summary AI-generate a custom mission based on player profile
+ */
+export const getGenerateMissionUrl = () => {
+  return `/api/missions/generate`;
+};
+
+export const generateMission = async (
+  options?: RequestInit,
+): Promise<Mission> => {
+  return customFetch<Mission>(getGenerateMissionUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getGenerateMissionMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateMission>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateMission>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["generateMission"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateMission>>,
+    void
+  > = () => {
+    return generateMission(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateMissionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateMission>>
+>;
+
+export type GenerateMissionMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary AI-generate a custom mission based on player profile
+ */
+export const useGenerateMission = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateMission>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateMission>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getGenerateMissionMutationOptions(options));
+};
+
+/**
+ * @summary Start a multiplayer challenge (vs AI opponent)
+ */
+export const getStartMultiplayerChallengeUrl = () => {
+  return `/api/multiplayer/challenge`;
+};
+
+export const startMultiplayerChallenge = async (
+  multiplayerChallengeBody: MultiplayerChallengeBody,
+  options?: RequestInit,
+): Promise<MultiplayerResult> => {
+  return customFetch<MultiplayerResult>(getStartMultiplayerChallengeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(multiplayerChallengeBody),
+  });
+};
+
+export const getStartMultiplayerChallengeMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startMultiplayerChallenge>>,
+    TError,
+    { data: BodyType<MultiplayerChallengeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof startMultiplayerChallenge>>,
+  TError,
+  { data: BodyType<MultiplayerChallengeBody> },
+  TContext
+> => {
+  const mutationKey = ["startMultiplayerChallenge"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof startMultiplayerChallenge>>,
+    { data: BodyType<MultiplayerChallengeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return startMultiplayerChallenge(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type StartMultiplayerChallengeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof startMultiplayerChallenge>>
+>;
+export type StartMultiplayerChallengeMutationBody =
+  BodyType<MultiplayerChallengeBody>;
+export type StartMultiplayerChallengeMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Start a multiplayer challenge (vs AI opponent)
+ */
+export const useStartMultiplayerChallenge = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startMultiplayerChallenge>>,
+    TError,
+    { data: BodyType<MultiplayerChallengeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof startMultiplayerChallenge>>,
+  TError,
+  { data: BodyType<MultiplayerChallengeBody> },
+  TContext
+> => {
+  return useMutation(getStartMultiplayerChallengeMutationOptions(options));
+};
+
+/**
+ * @summary Get an AI hint for a scenario (costs hint points)
  */
 export const getGetAiHintUrl = () => {
   return `/api/ai/hint`;
@@ -771,7 +1266,7 @@ export type GetAiHintMutationBody = BodyType<AiHintBody>;
 export type GetAiHintMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Get an AI hint for a scenario
+ * @summary Get an AI hint for a scenario (costs hint points)
  */
 export const useGetAiHint = <
   TError = ErrorType<ErrorResponse>,

@@ -1,23 +1,34 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetQuestions, getGetQuestionsQueryKey, useSubmitScore, useGetAiHint } from "@workspace/api-client-react";
+import { useGetQuestions, getGetQuestionsQueryKey, useSubmitScore, useGetAiHint, useGetUser } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Timer, CheckCircle, XCircle, Lightbulb, ChevronRight, RotateCcw, Lock } from "lucide-react";
+import { Activity, Timer, CheckCircle, XCircle, Lightbulb, ChevronRight, RotateCcw, Lock, Trophy } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { audioEffects } from "@/hooks/useAudio";
+import { useQueryClient } from "@tanstack/react-query";
 
 const TIMER_SECONDS = 60;
+const DIFF_HINT_COST: Record<string, number> = { Easy: 10, Medium: 15, Hard: 25, Expert: 40 };
 
 export default function Escape() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [timedOut, setTimedOut] = useState(false);
   const [hints, setHints] = useState<string[]>([]);
+  const [hintCosts, setHintCosts] = useState<number[]>([]);
   const [hintLevel, setHintLevel] = useState(0);
   const [score, setScore] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
 
+  const { data: user } = useGetUser();
   const { data: questions = [], isLoading } = useGetQuestions(
     { mode: "escape" },
     { query: { queryKey: getGetQuestionsQueryKey({ mode: "escape" }) } }
@@ -28,42 +39,85 @@ export default function Escape() {
 
   const question = questions[currentIndex];
   const answered = selected !== null || timedOut;
+  const correct = selected !== null && selected === question?.correctAnswer;
+  const hintPointCost = DIFF_HINT_COST[question?.difficulty ?? "Medium"] ?? 15;
+  const maxHints = 3;
 
   const handleTimeout = useCallback(() => {
     if (!answered) {
+      audioEffects.error();
       setTimedOut(true);
-      submitScore.mutate({ data: { mode: "escape", score: 0, xpEarned: 2 } });
+      setFlash("wrong");
+      setTimeout(() => setFlash(null), 600);
+      submitScore.mutate({ data: { mode: "escape", score: 0, xpEarned: 2, isCorrect: false, responseTimeMs: TIMER_SECONDS * 1000 } });
     }
   }, [answered]);
 
   useEffect(() => {
     if (answered) return;
     if (timeLeft <= 0) { handleTimeout(); return; }
+    if (timeLeft <= 10) audioEffects.timer();
     const t = setTimeout(() => setTimeLeft(s => s - 1), 1000);
     return () => clearTimeout(t);
   }, [timeLeft, answered, handleTimeout]);
 
+  useEffect(() => {
+    setTimeLeft(TIMER_SECONDS);
+    startTimeRef.current = Date.now();
+    setHints([]);
+    setHintCosts([]);
+    setHintLevel(0);
+  }, [currentIndex]);
+
   function handleSelect(idx: number) {
     if (answered) return;
+    const responseTimeMs = Date.now() - startTimeRef.current;
+    const isCorrect = idx === question?.correctAnswer;
     setSelected(idx);
-    const correct = idx === question?.correctAnswer;
-    const timeBonus = Math.floor(timeLeft / TIMER_SECONDS * 50);
-    const hintPenalty = hintLevel * 15;
-    const pts = correct ? Math.max(50, 150 + timeBonus - hintPenalty) : 0;
-    const xp = correct ? 30 : 5;
-    if (correct) setScore(s => s + pts);
-    submitScore.mutate({ data: { mode: "escape", score: pts, xpEarned: xp } });
+
+    if (isCorrect) {
+      audioEffects.success();
+      setFlash("correct");
+      const timeBonus = Math.floor((timeLeft / TIMER_SECONDS) * 50);
+      const hintPenalty = hints.length * 10;
+      const pts = Math.max(100 + timeBonus - hintPenalty, 10);
+      setScore(s => s + pts);
+      setCorrectCount(c => c + 1);
+    } else {
+      audioEffects.error();
+      setFlash("wrong");
+    }
+    setTimeout(() => setFlash(null), 600);
+
+    submitScore.mutate(
+      {
+        data: {
+          mode: "escape",
+          score: isCorrect ? Math.max(100 + Math.floor((timeLeft / TIMER_SECONDS) * 50) - hints.length * 10, 10) : 0,
+          xpEarned: isCorrect ? 25 : 5,
+          isCorrect,
+          responseTimeMs,
+        },
+      },
+      {
+        onSuccess: (data) => {
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          if (data.leveledUp) {
+            audioEffects.levelUp();
+            toast({ title: "LEVEL UP!", description: `Now Level ${data.level}!` });
+          }
+        },
+      }
+    );
   }
 
   function handleNext() {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(i => i + 1);
       setSelected(null);
-      setTimeLeft(TIMER_SECONDS);
       setTimedOut(false);
-      setHints([]);
-      setHintLevel(0);
     } else {
+      audioEffects.victory();
       setCompleted(true);
     }
   }
@@ -71,103 +125,158 @@ export default function Escape() {
   function handleReset() {
     setCurrentIndex(0);
     setSelected(null);
-    setTimeLeft(TIMER_SECONDS);
     setTimedOut(false);
     setHints([]);
+    setHintCosts([]);
     setHintLevel(0);
     setScore(0);
+    setCorrectCount(0);
     setCompleted(false);
   }
 
   function handleAskHint() {
-    if (!question || hintLevel >= 2) return;
-    const hintStr = hintLevel === 0
-      ? "Give me a very subtle hint about what to look for"
-      : "Give me a stronger hint that gets me closer to the solution";
+    if (!question || hintLevel >= maxHints) return;
+    audioEffects.hint();
+    const hintText = `Hint ${hintLevel + 1}: ${question.scenario.substring(0, 80)}...`;
     getHint.mutate(
-      { data: { scenario: question.scenario, question: hintStr, mode: "escape" } },
-      { onSuccess: (data) => { setHints(h => [...h, data.hint]); setHintLevel(l => l + 1); } }
+      { data: { scenario: question.scenario, question: `Provide hint #${hintLevel + 1} for this escape puzzle`, mode: "escape" } },
+      {
+        onSuccess: (data) => {
+          setHints(prev => [...prev, data.hint]);
+          setHintCosts(prev => [...prev, data.hintPointsCost ?? hintPointCost]);
+          setHintLevel(l => l + 1);
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          toast({ description: `Hint ${hintLevel + 1} revealed: -${data.hintPointsCost} HP (${data.hintPointsRemaining} remaining)` });
+        },
+        onError: (err) => {
+          audioEffects.error();
+          toast({ title: "Hint unavailable", description: err.message, variant: "destructive" });
+        },
+      }
     );
   }
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><div className="text-primary animate-pulse text-sm font-mono">Loading mission data...</div></div>;
+    return <div className="flex items-center justify-center h-64"><div className="text-purple-400 animate-pulse text-sm font-mono">Initializing escape room...</div></div>;
   }
 
   if (completed) {
+    const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
     return (
-      <div className="max-w-xl mx-auto text-center space-y-6 pt-16">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-6xl font-bold text-primary font-mono">{score}</motion.div>
-        <p className="text-muted-foreground">Points earned in Escape Room</p>
-        <Button onClick={handleReset} className="gap-2"><RotateCcw className="w-4 h-4" /> Play Again</Button>
-      </div>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-xl mx-auto text-center space-y-6 pt-8">
+        <div className="w-16 h-16 bg-purple-400/20 rounded-full flex items-center justify-center mx-auto">
+          <Trophy className="w-8 h-8 text-purple-400" />
+        </div>
+        <div>
+          <div className="text-5xl font-bold text-purple-400 font-mono">{score}</div>
+          <p className="text-muted-foreground mt-2">Points escaped with in Escape Room</p>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: "Solved", value: `${correctCount}/${questions.length}` },
+            { label: "Accuracy", value: `${accuracy}%` },
+            { label: "Score", value: score },
+          ].map(stat => (
+            <Card key={stat.label} className="bg-card border-border">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-purple-400 font-mono">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Button onClick={handleReset} size="lg" className="gap-2 bg-purple-400 text-white hover:bg-purple-400/90">
+          <RotateCcw className="w-4 h-4" /> Attempt Again
+        </Button>
+      </motion.div>
     );
   }
 
   if (!question) return null;
 
-  const timerPercent = (timeLeft / TIMER_SECONDS) * 100;
-  const correct = selected === question.correctAnswer;
+  const timerPct = (timeLeft / TIMER_SECONDS) * 100;
+  const timerColor = timeLeft > 20 ? "bg-primary" : timeLeft > 10 ? "bg-yellow-400" : "bg-red-400";
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <motion.div
+      animate={flash === "wrong" ? { x: [-6, 6, -6, 6, 0] } : {}}
+      transition={{ duration: 0.3 }}
+      className={`max-w-2xl mx-auto space-y-6 ${flash === "correct" ? "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-xl" : ""}`}
+    >
+      <AnimatePresence>
+        {flash && (
+          <motion.div initial={{ opacity: 0.4 }} animate={{ opacity: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}
+            className={`fixed inset-0 pointer-events-none z-50 ${flash === "correct" ? "bg-primary/20" : "bg-destructive/20"}`}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Activity className="w-5 h-5 text-purple-400" />
           <h1 className="text-xl font-bold">Escape Room</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-2 font-mono text-lg font-bold ${timerPercent > 50 ? "text-primary" : timerPercent > 25 ? "text-yellow-400" : "text-destructive"}`}>
-            <Timer className="w-5 h-5" /> {timeLeft}s
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-1.5 px-2 py-1 rounded border text-xs font-mono ${timeLeft <= 10 ? "border-red-400/50 text-red-400 animate-pulse" : "border-border text-foreground"}`}>
+            <Timer className="w-3.5 h-3.5" /> {timeLeft}s
           </div>
+          <Badge variant="outline" className="font-mono border-purple-400/30 text-purple-400">{currentIndex + 1} / {questions.length}</Badge>
           <Badge variant="outline" className="font-mono text-primary">{score} pts</Badge>
+          {user && <Badge variant="outline" className="font-mono text-yellow-400 border-yellow-400/30"><span className="text-[10px] mr-1">HP</span>{user.hintPoints}</Badge>}
         </div>
       </div>
 
-      {/* Timer bar */}
-      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ backgroundColor: timerPercent > 50 ? "#22c55e" : timerPercent > 25 ? "#eab308" : "#ef4444" }}
-          animate={{ width: `${timerPercent}%` }}
-          transition={{ duration: 0.5 }}
-        />
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+        <motion.div className={`h-full rounded-full transition-colors ${timerColor}`} animate={{ width: `${timerPct}%` }} transition={{ duration: 0.5 }} />
       </div>
 
-      {/* Puzzle */}
       <Card className="bg-card border-purple-400/20">
         <CardHeader className="pb-2 border-b border-border">
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-purple-400" />
-            <CardTitle className="text-sm text-purple-400">PUZZLE {currentIndex + 1} / {questions.length}</CardTitle>
-            <Badge className="ml-auto text-xs bg-purple-400/10 border-purple-400/30 text-purple-400">{question.difficulty}</Badge>
+            <CardTitle className="text-sm text-muted-foreground">Security Puzzle</CardTitle>
+            <div className="ml-auto flex items-center gap-2">
+              {hints.length > 0 && <span className="text-xs text-yellow-400">-{hints.length * 10} pts (hints)</span>}
+              <Badge className="text-xs border-purple-400/30 text-purple-400 bg-purple-400/10">{question.difficulty}</Badge>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <p className="text-sm leading-relaxed font-mono text-foreground/90 bg-background/50 rounded-lg p-4 border border-border">
+          <pre className="text-sm font-mono text-foreground whitespace-pre-wrap leading-relaxed bg-background/50 rounded-lg p-4 border border-border">
             {question.scenario}
-          </p>
+          </pre>
         </CardContent>
       </Card>
 
-      {/* Hints */}
-      {hints.map((h, i) => (
-        <motion.div key={i} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
-          <Card className={`border ${i === 0 ? "bg-yellow-400/5 border-yellow-400/30" : "bg-orange-400/5 border-orange-400/30"}`}>
-            <CardContent className="p-4 flex gap-3">
-              <Lightbulb className={`w-4 h-4 shrink-0 mt-0.5 ${i === 0 ? "text-yellow-400" : "text-orange-400"}`} />
-              <div>
-                <p className={`text-xs font-semibold mb-1 ${i === 0 ? "text-yellow-400" : "text-orange-400"}`}>
-                  {i === 0 ? "Hint 1 (subtle)" : "Hint 2 (stronger)"}
-                </p>
-                <p className="text-sm text-foreground/80">{h}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ))}
+      <AnimatePresence>
+        {hints.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+            {hints.map((h, i) => (
+              <motion.div key={i} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+                <Card className="bg-yellow-400/5 border-yellow-400/30">
+                  <CardContent className="p-3 flex gap-3">
+                    <Lightbulb className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-yellow-400/70 mb-1">Hint {i + 1} (-{hintCosts[i] ?? hintPointCost} HP)</p>
+                      <p className="text-sm text-foreground/80">{h}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Options */}
+      {timedOut && (
+        <Card className="bg-destructive/5 border-destructive/30">
+          <CardContent className="p-4 flex gap-3">
+            <Timer className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <p className="text-sm text-destructive font-semibold">Time's up! You're still locked in.</p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="space-y-2">
         {question.options.map((option, idx) => {
           let cls = "bg-card border-border hover:border-purple-400/50 cursor-pointer";
@@ -180,6 +289,7 @@ export default function Escape() {
             <motion.button
               key={idx}
               whileHover={!answered ? { x: 4 } : {}}
+              whileTap={!answered ? { scale: 0.98 } : {}}
               onClick={() => handleSelect(idx)}
               className={`w-full text-left p-4 rounded-xl border transition-all text-sm ${cls}`}
             >
@@ -199,14 +309,14 @@ export default function Escape() {
       <AnimatePresence>
         {answered && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <Card className={`border ${correct && !timedOut ? "bg-primary/5 border-primary/30" : "bg-destructive/5 border-destructive/30"}`}>
+            <Card className={`border ${correct ? "bg-primary/5 border-primary/30" : "bg-destructive/5 border-destructive/30"}`}>
               <CardContent className="p-4 flex gap-3">
-                {correct && !timedOut ? <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" /> : <XCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />}
+                {correct ? <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" /> : <XCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />}
                 <div>
-                  <p className={`text-sm font-semibold mb-1 ${correct && !timedOut ? "text-primary" : "text-destructive"}`}>
-                    {timedOut ? "Time's up! Room not escaped." : correct ? "Room Escaped!" : "Wrong answer! Room locked."}
+                  <p className={`text-sm font-semibold mb-1 ${correct ? "text-primary" : "text-destructive"}`}>
+                    {correct ? "Puzzle Solved! Escaped!" : timedOut ? "Out of time — door stays locked" : "Wrong key — try the next room"}
                   </p>
-                  <p className="text-sm text-foreground/80">{question.explanation}</p>
+                  {question.explanation && <p className="text-sm text-foreground/80">{question.explanation}</p>}
                 </div>
               </CardContent>
             </Card>
@@ -215,20 +325,24 @@ export default function Escape() {
       </AnimatePresence>
 
       <div className="flex items-center gap-3">
-        {!answered && hintLevel < 2 && (
-          <Button variant="outline" size="sm" onClick={handleAskHint} disabled={getHint.isPending}
-            className={`gap-2 ${hintLevel === 0 ? "border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10" : "border-orange-400/30 text-orange-400 hover:bg-orange-400/10"}`}>
+        {!answered && hintLevel < maxHints && (
+          <Button
+            variant="outline" size="sm"
+            onClick={handleAskHint}
+            disabled={getHint.isPending || (user ? user.hintPoints < hintPointCost : false)}
+            className="gap-2 border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10"
+          >
             <Lightbulb className="w-4 h-4" />
-            {getHint.isPending ? "Thinking..." : `Get ${hintLevel === 0 ? "Hint 1" : "Hint 2"} (-15 pts)`}
+            {getHint.isPending ? "Thinking..." : `Hint ${hintLevel + 1}/${maxHints} (${hintPointCost} HP)`}
           </Button>
         )}
         {answered && (
-          <Button onClick={handleNext} className="ml-auto gap-2 bg-primary text-primary-foreground">
-            {currentIndex < questions.length - 1 ? "Next Puzzle" : "Complete Mission"}
+          <Button onClick={handleNext} className="ml-auto gap-2 bg-purple-400 text-white hover:bg-purple-400/90">
+            {currentIndex < questions.length - 1 ? "Next Puzzle" : "Escape Complete"}
             <ChevronRight className="w-4 h-4" />
           </Button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

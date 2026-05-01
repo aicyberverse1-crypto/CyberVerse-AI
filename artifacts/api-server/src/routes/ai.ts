@@ -1,7 +1,10 @@
 import { Router, type IRouter } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { db, usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { GetAiHintBody, SendAiChatMessageBody } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth";
+import { HINT_COSTS } from "../lib/userProfile";
 
 const router: IRouter = Router();
 
@@ -12,7 +15,23 @@ router.post("/ai/hint", requireAuth, async (req: AuthRequest, res): Promise<void
     return;
   }
 
-  const { scenario, question, mode } = parsed.data;
+  const { scenario, question, mode, difficulty } = parsed.data;
+  const cost = HINT_COSTS[difficulty ?? "medium"] ?? 15;
+
+  // Deduct hint points
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user!.userId));
+  if (!user) {
+    res.status(401).json({ error: "User not found" });
+    return;
+  }
+
+  if (user.hintPoints < cost) {
+    res.status(402).json({ error: `Not enough hint points. Need ${cost}, have ${user.hintPoints}. Earn more by answering correctly or claiming your daily bonus!` });
+    return;
+  }
+
+  const newHintPoints = user.hintPoints - cost;
+  await db.update(usersTable).set({ hintPoints: newHintPoints }).where(eq(usersTable.id, user.id));
 
   const modeDescriptions: Record<string, string> = {
     phishing: "phishing email detection",
@@ -24,18 +43,18 @@ router.post("/ai/hint", requireAuth, async (req: AuthRequest, res): Promise<void
   const modeDesc = modeDescriptions[mode] ?? mode;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-5-mini",
+    model: "gpt-4o-mini",
     max_completion_tokens: 300,
     messages: [
       {
         role: "system",
-        content: `You are CyberGuard, an expert cybersecurity mentor helping a student learn through interactive simulation games. Your role is to give educational HINTS, not direct answers. The student is playing a ${modeDesc} game.
+        content: `You are CyberGuard, an expert cybersecurity mentor helping a student learn through interactive simulation games. Your role is to give educational HINTS, not direct answers. The student is playing a ${modeDesc} game at ${difficulty ?? "medium"} difficulty.
 
 Rules:
 - Give a hint that guides thinking, NOT the answer
 - Be educational and explain WHY something matters
 - Keep it concise (2-3 sentences max)
-- Use simple language, no jargon overload
+- Use simple language
 - Be encouraging and supportive
 - Never reveal the correct answer directly`,
       },
@@ -47,7 +66,7 @@ Rules:
   });
 
   const hint = completion.choices[0]?.message?.content ?? "Think carefully about what makes this scenario suspicious or legitimate.";
-  res.json({ hint });
+  res.json({ hint, hintPointsCost: cost, hintPointsRemaining: newHintPoints });
 });
 
 router.post("/ai/chat", requireAuth, async (req: AuthRequest, res): Promise<void> => {
@@ -64,7 +83,7 @@ router.post("/ai/chat", requireAuth, async (req: AuthRequest, res): Promise<void
     : "The user is on the main dashboard.";
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-5-mini",
+    model: "gpt-4o-mini",
     max_completion_tokens: 500,
     messages: [
       {

@@ -12,6 +12,9 @@ import Builder from "@/pages/builder";
 import Escape from "@/pages/escape";
 import AiAssistant from "@/pages/ai-assistant";
 import Leaderboard from "@/pages/leaderboard";
+import SkillTree from "@/pages/skill-tree";
+import Missions from "@/pages/missions";
+import Multiplayer from "@/pages/multiplayer";
 import AppLayout from "@/components/layout/AppLayout";
 import { useEffect } from "react";
 import { getToken } from "@/lib/auth";
@@ -49,7 +52,7 @@ function Router() {
       }} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
+
       <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/phishing" component={() => <ProtectedRoute component={Phishing} />} />
       <Route path="/defense" component={() => <ProtectedRoute component={Defense} />} />
@@ -57,7 +60,10 @@ function Router() {
       <Route path="/escape" component={() => <ProtectedRoute component={Escape} />} />
       <Route path="/ai-assistant" component={() => <ProtectedRoute component={AiAssistant} />} />
       <Route path="/leaderboard" component={() => <ProtectedRoute component={Leaderboard} />} />
-      
+      <Route path="/skill-tree" component={() => <ProtectedRoute component={SkillTree} />} />
+      <Route path="/missions" component={() => <ProtectedRoute component={Missions} />} />
+      <Route path="/multiplayer" component={() => <ProtectedRoute component={Multiplayer} />} />
+
       <Route component={NotFound} />
     </Switch>
   );
