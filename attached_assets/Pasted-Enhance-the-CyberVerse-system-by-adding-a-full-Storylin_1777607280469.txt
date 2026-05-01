@@ -1,0 +1,184 @@
+Enhance the CyberVerse system by adding a full Storyline Campaign Mode with chapters, narrative progression, and AI-generated story missions.
+
+DO NOT rebuild the app. Extend the existing mission, AI, and progression systems.
+
+---
+
+1. CORE CONCEPT
+
+* Introduce a Story Mode where players progress through a cyber narrative
+* Story is divided into Chapters → Missions → Objectives
+* Each player experiences the story differently based on:
+
+  * hackerType (Defender / Attacker)
+  * skill tree
+  * decisions made
+
+---
+
+2. STORY STRUCTURE
+
+Create Chapters:
+
+Chapter 1: “The Breach Begins”
+
+* Intro to cyber world
+* Basic missions
+
+Chapter 2: “Shadow Network”
+
+* Hidden attackers emerge
+
+Chapter 3: “System Collapse”
+
+* Large-scale attacks
+
+Chapter 4: “Counterstrike Protocol”
+
+* Player fights back
+
+Chapter 5: “Final Firewall”
+
+* Ultimate challenge
+
+---
+
+3. BRANCHING STORY PATHS
+
+* Defender Storyline:
+
+  * Focus on protection, investigation, recovery
+
+* Attacker Storyline:
+
+  * Focus on infiltration, exploitation, domination
+
+* Player choices affect:
+
+  * Mission types
+  * Difficulty
+  * Rewards
+
+---
+
+4. AI-DRIVEN STORY MISSIONS
+
+* AI generates missions WITH narrative context
+
+Input to AI:
+
+* Chapter number
+* Player role
+* Skills
+* Previous choices
+
+AI Output:
+{
+title: "Mission Title",
+storyText: "Narrative scene",
+objectives: [],
+choices: [
+"Option A",
+"Option B"
+],
+consequences: {},
+rewards: {}
+}
+
+---
+
+5. PLAYER CHOICES & CONSEQUENCES
+
+* Add decision points:
+
+  * Example:
+    “Block attack immediately” OR “Trace attacker”
+
+* Each choice:
+
+  * Changes next mission
+  * Affects difficulty
+  * Alters rewards
+
+---
+
+6. STORY PROGRESSION SYSTEM
+
+Database:
+Add:
+
+* currentChapter
+
+* currentMission
+
+* storyProgress (JSON)
+
+* Save:
+
+  * choices made
+  * completed missions
+
+---
+
+7. CUTSCENE / STORY DISPLAY
+
+* Add story panels before missions:
+
+  * Animated text
+  * Typing effect
+  * Sound effects
+
+* Optional:
+
+  * Glitch-style transitions
+
+---
+
+8. BOSS MISSIONS
+
+* End of each chapter:
+
+  * Boss challenge
+
+Examples:
+
+* Defender → stop massive cyber attack
+
+* Attacker → break high-security system
+
+* Harder difficulty
+
+* Higher rewards
+
+---
+
+9. REWARD SYSTEM
+
+* Completing chapters gives:
+
+  * XP boost
+  * Skill points
+  * Rare badges
+
+---
+
+10. IMMERSION FEATURES
+
+* Add:
+
+  * “Incoming transmission…” messages
+  * AI narrator voice/text
+  * Urgent alerts
+
+---
+
+11. FINAL GOAL
+
+The game should feel like a cinematic cybersecurity journey where:
+
+* Players are part of a larger story
+* Their decisions matter
+* Each path feels unique
+* AI creates endless variations of the narrative
+
+The player should feel like a real cyber agent in a digital war.

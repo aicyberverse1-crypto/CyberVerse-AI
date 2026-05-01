@@ -1,0 +1,295 @@
+Upgrade the existing CyberVerse AI application into a complete gamified cybersecurity platform.
+
+DO NOT rebuild the app. Extend the existing system.
+
+---
+
+1. USER AUTHENTICATION SYSTEM
+
+* Add registration and login system
+
+Registration:
+
+* Username (unique)
+* Password (hashed)
+
+Login:
+
+* Use JWT authentication
+
+Database (PostgreSQL):
+Users table:
+
+* id
+* username
+* password
+* XP
+* level
+* totalScore
+* hintPoints (default = 500)
+* hackerType (Defender / Attacker)
+* skillPoints
+* unlockedSkills
+* rank
+* accuracyRate
+* averageResponseTime
+* streakDays
+* lastClaimedAt
+* dailyScore
+
+---
+
+2. HINT POINT ECONOMY
+
+* Start with 500 hint points
+
+AI Usage Cost:
+
+* Easy → 10 points
+* Medium → 15 points
+* Hard → 25 points
+* Expert → 40 points
+
+Rules:
+
+* Deduct points before AI response
+* If points = 0 → block AI usage
+
+Rewards:
+
+* Correct answer → +5 points
+* Level completion → +20 points
+
+---
+
+3. DAILY BONUS + STREAK SYSTEM
+
+Daily Reward:
+
+* +20 hint points (once every 24 hours)
+
+Streak Logic:
+
+* Consecutive login → increase streak
+* Miss a day → reset streak
+
+Streak Rewards:
+
+* Day 1 → +20
+* Day 2 → +25
+* Day 3 → +30
+* Day 5 → +50
+* Day 7 → +100
+
+---
+
+4. TOP HACKER OF THE DAY
+
+* Track dailyScore
+
+* Reset daily
+
+* Highest scorer gets:
+  “Top Hacker of the Day” badge
+
+* Highlight in leaderboard
+
+---
+
+5. ADAPTIVE AI DIFFICULTY
+
+Track:
+
+* accuracyRate
+* response time
+* recent performance
+
+Difficulty:
+
+* Easy / Medium / Hard / Expert
+
+Logic:
+
+* High accuracy → increase difficulty
+* Low accuracy → decrease difficulty
+
+AI adjusts:
+
+* Question complexity
+* Hint quality
+
+---
+
+6. RANK TIER SYSTEM
+
+Ranks:
+
+* Bronze → 0+
+
+* Silver → 500+
+
+* Gold → 1500+
+
+* Platinum → 3000+
+
+* Diamond → 6000+
+
+* Elite Hacker → 10000+
+
+* Auto-update rank based on score
+
+---
+
+7. SKILL TREE SYSTEM
+
+Hacker Types:
+
+* Defender
+* Attacker
+
+Skill Points:
+
+* Earn via leveling
+
+Defender Skills:
+
+* Firewall Boost
+* Hint Efficiency
+* Threat Detection
+* System Recovery
+* Shield Mode
+
+Attacker Skills:
+
+* Exploit Mastery
+* Speed Hack
+* Critical Strike
+* AI Override
+* Overclock Mode
+
+---
+
+8. AI-GENERATED CUSTOM MISSIONS
+
+AI should generate missions based on:
+
+* hackerType
+* unlockedSkills
+* difficulty
+* performance
+
+Mission Types:
+
+Defender:
+
+* Secure systems
+* Detect threats
+* Fix vulnerabilities
+
+Attacker:
+
+* Exploit systems
+* Crack security
+* Simulate attacks
+
+Mission Output:
+
+* Title
+* Scenario
+* Objectives
+* Hints
+* Rewards (XP, score, hintPoints)
+
+---
+
+9. MULTIPLAYER SYSTEM
+
+* Player vs Player mode
+
+* Show:
+
+  * Live score comparison
+  * Winner screen
+
+* If real-time not possible:
+  → Simulate opponent AI
+
+---
+
+10. LEADERBOARD SYSTEM
+
+* Show:
+
+  * Username
+  * Score
+  * Level
+  * Rank
+
+Filters:
+
+* Daily
+* Weekly
+* All-time
+
+Highlight:
+
+* Current user
+* Top Hacker
+
+---
+
+11. UI UPDATES
+
+Navbar:
+
+* Username
+* XP
+* Level
+* Rank
+* Hint Points
+
+Add:
+
+* Daily rewards panel
+* Skill tree page
+* Mission panel
+* Leaderboard page
+
+---
+
+12. GAME EFFECTS
+
+* Timer countdown
+* Glitch effect on wrong answers
+* Flash effect on correct answers
+
+---
+
+13. AUDIO SYSTEM
+
+* Typing sounds
+* Alert sounds
+* Success tone
+* Error sound
+
+---
+
+14. SECURITY
+
+* Use JWT middleware
+* Protect all user routes
+* Ensure user-specific data access
+
+---
+
+15. FINAL GOAL
+
+The application should feel like a real cybersecurity simulation platform where users:
+
+* Compete globally
+* Build their own hacker identity
+* Progress through ranks
+* Manage resources strategically
+* Play personalized AI-generated missions
+
+The system should feel intelligent, competitive, and immersive — like a real cyber training OS.

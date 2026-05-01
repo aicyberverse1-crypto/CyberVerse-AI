@@ -3,13 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: CyberVerse AI - Hacker vs Defender Simulator API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User profile and progress
+  - name: questions
+    description: Game question management
+  - name: scores
+    description: Score and XP tracking
+  - name: leaderboard
+    description: Leaderboard operations
+  - name: ai
+    description: AI assistant operations
 paths:
   /healthz:
     get:
@@ -24,6 +36,224 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /user:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /questions:
+    get:
+      operationId: getQuestions
+      tags: [questions]
+      summary: Get questions for a game mode
+      parameters:
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [phishing, defense, builder, escape]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+
+  /score:
+    post:
+      operationId: submitScore
+      tags: [scores]
+      summary: Submit score and gain XP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitScoreBody"
+      responses:
+        "200":
+          description: Score submitted and XP updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoreResult"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get top players leaderboard
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [scores]
+      summary: Get aggregated dashboard stats for current user
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ai/hint:
+    post:
+      operationId: getAiHint
+      tags: [ai]
+      summary: Get an AI hint for a scenario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiHintBody"
+      responses:
+        "200":
+          description: AI hint response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiHintResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ai/chat:
+    post:
+      operationId: sendAiChatMessage
+      tags: [ai]
+      summary: Send a message to the AI assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatBody"
+      responses:
+        "200":
+          description: AI assistant response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChatResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +264,244 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    RegisterBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserProfile"
+      required:
+        - token
+        - user
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        xp:
+          type: integer
+        level:
+          type: integer
+        totalScore:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - username
+        - xp
+        - level
+        - totalScore
+        - createdAt
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+        mode:
+          type: string
+        scenario:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: integer
+        explanation:
+          type: string
+        difficulty:
+          type: string
+      required:
+        - id
+        - mode
+        - scenario
+        - options
+        - correctAnswer
+        - explanation
+        - difficulty
+
+    SubmitScoreBody:
+      type: object
+      properties:
+        mode:
+          type: string
+        score:
+          type: integer
+        xpEarned:
+          type: integer
+        questionId:
+          type: ["integer", "null"]
+      required:
+        - mode
+        - score
+        - xpEarned
+
+    ScoreResult:
+      type: object
+      properties:
+        totalScore:
+          type: integer
+        xp:
+          type: integer
+        level:
+          type: integer
+        leveledUp:
+          type: boolean
+      required:
+        - totalScore
+        - xp
+        - level
+        - leveledUp
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        username:
+          type: string
+        totalScore:
+          type: integer
+        xp:
+          type: integer
+        level:
+          type: integer
+      required:
+        - rank
+        - username
+        - totalScore
+        - xp
+        - level
+
+    DashboardStats:
+      type: object
+      properties:
+        totalScore:
+          type: integer
+        xp:
+          type: integer
+        level:
+          type: integer
+        xpToNextLevel:
+          type: integer
+        gamesPlayed:
+          type: integer
+        phishingScore:
+          type: integer
+        defenseScore:
+          type: integer
+        builderScore:
+          type: integer
+        escapeScore:
+          type: integer
+        rank:
+          type: ["integer", "null"]
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+      required:
+        - totalScore
+        - xp
+        - level
+        - xpToNextLevel
+        - gamesPlayed
+        - phishingScore
+        - defenseScore
+        - builderScore
+        - escapeScore
+        - rank
+        - recentActivity
+
+    ActivityItem:
+      type: object
+      properties:
+        mode:
+          type: string
+        score:
+          type: integer
+        xpEarned:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - mode
+        - score
+        - xpEarned
+        - createdAt
+
+    AiHintBody:
+      type: object
+      properties:
+        scenario:
+          type: string
+        question:
+          type: string
+        mode:
+          type: string
+      required:
+        - scenario
+        - question
+        - mode
+
+    AiHintResponse:
+      type: object
+      properties:
+        hint:
+          type: string
+      required:
+        - hint
+
+    AiChatBody:
+      type: object
+      properties:
+        message:
+          type: string
+        gameMode:
+          type: ["string", "null"]
+      required:
+        - message
+
+    AiChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+      required:
+        - response
