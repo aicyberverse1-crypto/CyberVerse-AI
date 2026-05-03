@@ -3,8 +3,7 @@ import { ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard, Mail, Shield, Lock, Bot, Trophy, LogOut, Activity,
-  TreePine, Swords, Users, Lightbulb, Globe, Zap, Newspaper, Award,
-  FlaskConical, User
+  TreePine, Swords, Users, Lightbulb, Globe, Zap, Newspaper, Award, User
 } from "lucide-react";
 import { useGetUser } from "@workspace/api-client-react";
 import { removeToken } from "@/lib/auth";
@@ -17,7 +16,6 @@ const NAV_ITEMS = [
   { path: "/defense", label: "Attack Defense", icon: Shield, group: "play" },
   { path: "/builder", label: "Secure Builder", icon: Lock, group: "play" },
   { path: "/escape", label: "Escape Room", icon: Activity, group: "play" },
-  { path: "/lab", label: "Cyber Lab", icon: FlaskConical, group: "play", badge: "NEW" },
   { path: "/multiplayer", label: "Multiplayer", icon: Users, group: "play" },
   { path: "/missions", label: "AI Missions", icon: Swords, group: "play" },
   { path: "/dark-web", label: "Dark Web Intel", icon: Globe, group: "intel" },

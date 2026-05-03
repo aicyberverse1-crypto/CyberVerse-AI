@@ -19,7 +19,6 @@ import Multiplayer from "@/pages/multiplayer";
 import DarkWeb from "@/pages/dark-web";
 import News from "@/pages/news";
 import Certificate from "@/pages/certificate";
-import Lab from "@/pages/lab";
 import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
 import AppLayout from "@/components/layout/AppLayout";
@@ -65,7 +64,6 @@ function Router() {
       <Route path="/dark-web" component={() => <ProtectedRoute component={DarkWeb} />} />
       <Route path="/news" component={() => <ProtectedRoute component={News} />} />
       <Route path="/certificate" component={() => <ProtectedRoute component={Certificate} />} />
-      <Route path="/lab" component={() => <ProtectedRoute component={Lab} />} />
       <Route path="/profile" component={() => <ProtectedRoute component={Profile} />} />
       <Route path="/admin" component={Admin} />
 
