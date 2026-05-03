@@ -1,0 +1,88 @@
+Add an advanced progression system to CyberVerse AI including badges, streak titles, and skill-based roles.
+
+IMPORTANT:
+- Do not break existing features
+- Integrate with current points and missions system
+
+-----------------------------------
+🏅 BADGE SYSTEM
+-----------------------------------
+Create badges:
+- Top Hacker of the Day (highest points daily)
+- Phishing Master (10 correct answers in a row)
+- Speed Runner (fast completion)
+- Defender Pro (high defense score)
+
+Features:
+- Store badges in user profile
+- Display badges on dashboard and leaderboard
+- Auto-assign badges based on performance
+
+-----------------------------------
+🔥 STREAK SYSTEM
+-----------------------------------
+Track:
+- Daily login streak
+- Win streak
+
+Create titles:
+- 3+ → Rising ⚡
+- 5+ → On Fire 🔥
+- 10+ → Unstoppable 🔥🔥
+
+Show streak title next to username
+
+Add:
+- Visual glow effect
+- Animation for streak
+
+-----------------------------------
+🧬 SKILL ROLE SYSTEM
+-----------------------------------
+Assign roles:
+- Defender 🛡️
+- Attacker ⚔️
+
+Logic:
+- Based on mission performance (defense vs attack)
+
+Display role in:
+- Dashboard
+- Profile
+- Leaderboard
+
+-----------------------------------
+🎮 UI INTEGRATION
+-----------------------------------
+Show full identity:
+
+Username • Rank • Role • Streak • Badge
+
+Example:
+Aru • Elite Hacker • Defender 🛡️ • On Fire 🔥 • 🏅
+
+-----------------------------------
+⚙️ BACKEND
+-----------------------------------
+- Extend user model:
+  - badges[]
+  - streak
+  - attackScore
+  - defenseScore
+
+- Create APIs:
+  - update streak
+  - assign badge
+  - get user stats
+
+-----------------------------------
+🎨 DESIGN
+-----------------------------------
+- Add glow effects for streak
+- Highlight badges with icons
+- Make top users visually stand out
+
+-----------------------------------
+🎯 GOAL
+-----------------------------------
+Create a highly engaging, gamified experience that motivates users through achievements, identity, and progression.
