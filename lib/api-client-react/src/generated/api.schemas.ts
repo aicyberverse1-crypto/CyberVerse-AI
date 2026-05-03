@@ -45,8 +45,12 @@ export interface UserProfile {
   rankTier: string;
   accuracyRate: number;
   streakDays: number;
+  winStreak: number;
   dailyScore: number;
   isTopHacker: boolean;
+  badges: string[];
+  /** @nullable */
+  streakTitle: string | null;
   /** @nullable */
   lastClaimedAt: string | null;
   createdAt: string;
@@ -117,6 +121,11 @@ export interface LeaderboardEntry {
   rankTier: string;
   hackerType: string;
   isTopHacker: boolean;
+  badges: string[];
+  streakDays: number;
+  winStreak: number;
+  /** @nullable */
+  streakTitle: string | null;
 }
 
 export interface ActivityItem {
@@ -142,7 +151,11 @@ export interface DashboardStats {
   rankTier: string;
   accuracyRate: number;
   streakDays: number;
+  winStreak: number;
   dailyScore: number;
+  badges: string[];
+  /** @nullable */
+  streakTitle: string | null;
   recentActivity: ActivityItem[];
 }
 

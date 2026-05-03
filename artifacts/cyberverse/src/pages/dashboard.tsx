@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { audioEffects } from "@/hooks/useAudio";
+import { BadgeDisplay, StreakTitle, IdentityLine } from "@/components/BadgeDisplay";
 
 const MODES = [
   { path: "/phishing", label: "Phishing Detective", icon: Mail, desc: "Identify phishing & social engineering", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/30" },
@@ -159,22 +160,40 @@ export default function Dashboard() {
   }
 
   const rankColorClass = RANK_COLORS[rankTier] ?? "text-amber-600 border-amber-600/30";
+  const streakDays = user?.streakDays ?? 0;
+  const badges = user?.badges ?? [];
+  const isOnFire = streakDays >= 5;
+  const isUnstoppable = streakDays >= 10;
 
   useEffect(() => {
     if (user?.username) {
-      document.title = user.isTopHacker ? "Welcome back, Admin" : `Welcome back, ${user.username}`;
+      const isAdmin = (user as any).role === "admin";
+      document.title = isAdmin ? "Welcome back, Admin" : `Welcome back, ${user.username}`;
     }
-  }, [user?.isTopHacker, user?.username]);
+  }, [(user as any)?.role, user?.username]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className={`text-2xl font-bold text-foreground ${isUnstoppable ? "drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]" : isOnFire ? "drop-shadow-[0_0_6px_rgba(251,146,60,0.4)]" : ""}`}>
             Welcome back, <span className="text-primary font-mono">{welcomeName}</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">SOC Dashboard — Mission Control Active</p>
+          {/* Full identity line */}
+          {user && (
+            <div className="mt-2">
+              <IdentityLine
+                username={user.username}
+                rankTier={user.rankTier}
+                hackerType={user.hackerType}
+                streakDays={streakDays}
+                badges={badges}
+                isTopHacker={user.isTopHacker}
+              />
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {user?.isTopHacker && (
@@ -211,19 +230,24 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-orange-400/20">
+        <Card className={`bg-card ${isUnstoppable ? "border-red-400/30 shadow-[0_0_12px_rgba(248,113,113,0.2)]" : isOnFire ? "border-orange-400/30 shadow-[0_0_10px_rgba(251,146,60,0.15)]" : "border-orange-400/20"}`}>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-orange-400/10 flex items-center justify-center">
-                <Flame className="w-5 h-5 text-orange-400" />
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isUnstoppable ? "bg-red-400/15" : "bg-orange-400/10"}`}>
+                <Flame className={`w-5 h-5 ${isUnstoppable ? "text-red-400" : "text-orange-400"}`} />
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">Login Streak</p>
                 <p className="text-xs text-muted-foreground">Day 7 earns +100 hint points!</p>
+                {streakDays >= 3 && (
+                  <div className="mt-1">
+                    <StreakTitle streakDays={streakDays} className="text-[9px]" animate={false} />
+                  </div>
+                )}
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-orange-400 font-mono">{stats?.streakDays ?? 0}</p>
+              <p className={`text-2xl font-bold font-mono ${isUnstoppable ? "text-red-400" : "text-orange-400"}`}>{streakDays}</p>
               <p className="text-xs text-muted-foreground">days</p>
             </div>
           </CardContent>

@@ -20,6 +20,8 @@ export const usersTable = pgTable("users", {
   correctAnswers: integer("correct_answers").notNull().default(0),
   averageResponseTime: real("average_response_time").notNull().default(0),
   streakDays: integer("streak_days").notNull().default(0),
+  winStreak: integer("win_streak").notNull().default(0),
+  badges: jsonb("badges").notNull().default([]),
   lastClaimedAt: timestamp("last_claimed_at"),
   lastLoginAt: timestamp("last_login_at"),
   dailyScore: integer("daily_score").notNull().default(0),
@@ -33,7 +35,7 @@ export const insertUserSchema = createInsertSchema(usersTable).omit({
   hintPoints: true, skillPoints: true, unlockedSkills: true, rankTier: true,
   accuracyRate: true, totalAnswers: true, correctAnswers: true, averageResponseTime: true,
   streakDays: true, lastClaimedAt: true, lastLoginAt: true, dailyScore: true,
-  lastDailyReset: true, isTopHacker: true,
+  lastDailyReset: true, isTopHacker: true, winStreak: true, badges: true,
 });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof usersTable.$inferSelect;

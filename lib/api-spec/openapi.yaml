@@ -513,10 +513,18 @@ components:
           type: number
         streakDays:
           type: integer
+        winStreak:
+          type: integer
         dailyScore:
           type: integer
         isTopHacker:
           type: boolean
+        badges:
+          type: array
+          items:
+            type: string
+        streakTitle:
+          type: ["string", "null"]
         lastClaimedAt:
           type: ["string", "null"]
         createdAt:
@@ -534,8 +542,11 @@ components:
         - rankTier
         - accuracyRate
         - streakDays
+        - winStreak
         - dailyScore
         - isTopHacker
+        - badges
+        - streakTitle
         - lastClaimedAt
         - createdAt
 
@@ -656,6 +667,16 @@ components:
           type: string
         isTopHacker:
           type: boolean
+        badges:
+          type: array
+          items:
+            type: string
+        streakDays:
+          type: integer
+        winStreak:
+          type: integer
+        streakTitle:
+          type: ["string", "null"]
       required:
         - rank
         - username
@@ -666,6 +687,10 @@ components:
         - rankTier
         - hackerType
         - isTopHacker
+        - badges
+        - streakDays
+        - winStreak
+        - streakTitle
 
     DashboardStats:
       type: object
@@ -698,8 +723,16 @@ components:
           type: number
         streakDays:
           type: integer
+        winStreak:
+          type: integer
         dailyScore:
           type: integer
+        badges:
+          type: array
+          items:
+            type: string
+        streakTitle:
+          type: ["string", "null"]
         recentActivity:
           type: array
           items:
@@ -719,7 +752,10 @@ components:
         - rankTier
         - accuracyRate
         - streakDays
+        - winStreak
         - dailyScore
+        - badges
+        - streakTitle
         - recentActivity
 
     ActivityItem:

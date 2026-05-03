@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Zap, Target, TrendingUp, Shield, Swords, Crown } from "lucide-react";
+import { BadgeDisplay, StreakTitle } from "@/components/BadgeDisplay";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 const RANK_COLORS: Record<string, string> = {
@@ -69,8 +70,18 @@ export default function Leaderboard() {
                     <p className="text-sm font-bold font-mono text-foreground truncate">{top3[1].username}</p>
                     <div className={`text-[10px] ${RANK_COLORS[top3[1].rankTier] ?? "text-muted-foreground"}`}>{top3[1].rankTier}</div>
                     <p className="text-xs text-muted-foreground">Lv {top3[1].level}</p>
+                    {top3[1].streakTitle && (
+                      <div className="flex justify-center mt-1">
+                        <StreakTitle streakDays={top3[1].streakDays} className="text-[9px]" animate={false} />
+                      </div>
+                    )}
                     <p className="text-lg font-bold text-foreground mt-1 font-mono">{top3[1].totalScore.toLocaleString()}</p>
                     {top3[1].isTopHacker && <div className="text-[10px] text-yellow-400">👑 Top Hacker</div>}
+                    {top3[1].badges.length > 0 && (
+                      <div className="flex justify-center mt-1.5">
+                        <BadgeDisplay badges={top3[1].badges} size="sm" animate={false} />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -87,8 +98,18 @@ export default function Leaderboard() {
                     <p className="text-sm font-bold font-mono text-yellow-400 truncate">{top3[0].username}</p>
                     <div className={`text-[10px] ${RANK_COLORS[top3[0].rankTier] ?? "text-muted-foreground"}`}>{top3[0].rankTier}</div>
                     <p className="text-xs text-muted-foreground">Lv {top3[0].level}</p>
+                    {top3[0].streakTitle && (
+                      <div className="flex justify-center mt-1">
+                        <StreakTitle streakDays={top3[0].streakDays} className="text-[9px]" animate={false} />
+                      </div>
+                    )}
                     <p className="text-xl font-bold text-yellow-400 mt-1 font-mono">{top3[0].totalScore.toLocaleString()}</p>
                     {top3[0].isTopHacker && <div className="text-[10px] text-yellow-400">👑 Top Hacker</div>}
+                    {top3[0].badges.length > 0 && (
+                      <div className="flex justify-center mt-1.5">
+                        <BadgeDisplay badges={top3[0].badges} size="sm" animate={false} />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -104,8 +125,18 @@ export default function Leaderboard() {
                     <p className="text-sm font-bold font-mono text-foreground truncate">{top3[2].username}</p>
                     <div className={`text-[10px] ${RANK_COLORS[top3[2].rankTier] ?? "text-muted-foreground"}`}>{top3[2].rankTier}</div>
                     <p className="text-xs text-muted-foreground">Lv {top3[2].level}</p>
+                    {top3[2].streakTitle && (
+                      <div className="flex justify-center mt-1">
+                        <StreakTitle streakDays={top3[2].streakDays} className="text-[9px]" animate={false} />
+                      </div>
+                    )}
                     <p className="text-lg font-bold text-foreground mt-1 font-mono">{top3[2].totalScore.toLocaleString()}</p>
                     {top3[2].isTopHacker && <div className="text-[10px] text-yellow-400">👑 Top Hacker</div>}
+                    {top3[2].badges.length > 0 && (
+                      <div className="flex justify-center mt-1.5">
+                        <BadgeDisplay badges={top3[2].badges} size="sm" animate={false} />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -123,12 +154,13 @@ export default function Leaderboard() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">
-            <div className="grid grid-cols-6 gap-2 px-4 py-2 text-xs text-muted-foreground font-medium">
-              <span>Rank</span>
-              <span className="col-span-2">Operator</span>
-              <span className="text-center">Type</span>
-              <span className="text-right"><Target className="w-3.5 h-3.5 inline" /> Score</span>
-              <span className="text-right"><Zap className="w-3.5 h-3.5 inline" /> XP</span>
+            <div className="grid grid-cols-12 gap-2 px-4 py-2 text-xs text-muted-foreground font-medium">
+              <span className="col-span-1">Rank</span>
+              <span className="col-span-4">Operator</span>
+              <span className="col-span-2">Role</span>
+              <span className="col-span-2">Badges</span>
+              <span className="col-span-2 text-right"><Target className="w-3.5 h-3.5 inline" /> Score</span>
+              <span className="col-span-1 text-right"><Zap className="w-3.5 h-3.5 inline" /></span>
             </div>
 
             {entries.map((entry, i) => {
@@ -140,38 +172,46 @@ export default function Leaderboard() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  className={`grid grid-cols-6 gap-2 px-4 py-2.5 text-sm items-center transition-colors ${
+                  className={`grid grid-cols-12 gap-2 px-4 py-2.5 text-sm items-center transition-colors ${
                     isMe ? "bg-primary/5 border-l-2 border-l-primary" : "hover:bg-muted/30"
                   }`}
                 >
-                  <div className="flex items-center">
+                  <div className="col-span-1 flex items-center">
                     {entry.rank <= 3
                       ? <span className="text-base">{MEDALS[entry.rank - 1]}</span>
                       : <span className="text-muted-foreground font-mono text-xs">{entry.rank}</span>
                     }
                   </div>
-                  <div className="col-span-2 flex items-center gap-2 min-w-0">
+                  <div className="col-span-4 flex items-center gap-2 min-w-0">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`font-mono font-medium text-xs truncate ${isMe ? "text-primary" : "text-foreground"}`}>
                           {entry.username}
                         </span>
                         {entry.isTopHacker && <Crown className="w-3 h-3 text-yellow-400 shrink-0" />}
                         {isMe && <Badge className="text-[9px] py-0 px-1 bg-primary/20 text-primary border-primary/30 shrink-0">You</Badge>}
                       </div>
-                      <div className={`text-[10px] ${rankColor}`}>{entry.rankTier} · Lv{entry.level}</div>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`text-[10px] ${rankColor}`}>{entry.rankTier} · Lv{entry.level}</span>
+                        {entry.streakTitle && (
+                          <StreakTitle streakDays={entry.streakDays} className="text-[8px] px-1" animate={false} />
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex justify-center">
+                  <div className="col-span-2 flex items-center gap-1">
                     {entry.hackerType === "attacker"
-                      ? <Swords className="w-3.5 h-3.5 text-red-400" />
-                      : <Shield className="w-3.5 h-3.5 text-primary" />
+                      ? <><Swords className="w-3 h-3 text-red-400 shrink-0" /><span className="text-[10px] text-red-400 hidden sm:inline">Attacker</span></>
+                      : <><Shield className="w-3 h-3 text-primary shrink-0" /><span className="text-[10px] text-primary hidden sm:inline">Defender</span></>
                     }
                   </div>
-                  <div className="text-right font-mono font-semibold text-xs text-foreground">
+                  <div className="col-span-2">
+                    <BadgeDisplay badges={entry.badges} size="sm" animate={false} />
+                  </div>
+                  <div className="col-span-2 text-right font-mono font-semibold text-xs text-foreground">
                     {entry.totalScore.toLocaleString()}
                   </div>
-                  <div className="text-right font-mono text-xs text-primary">
+                  <div className="col-span-1 text-right font-mono text-xs text-primary">
                     {entry.xp.toLocaleString()}
                   </div>
                 </motion.div>

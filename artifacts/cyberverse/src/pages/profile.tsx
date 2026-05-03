@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, Shield, Swords, Star, Target, Zap, Trophy, TrendingUp, CheckCircle, Lightbulb, Flame } from "lucide-react";
 import { audioEffects } from "@/hooks/useAudio";
+import { BadgeDisplay, StreakTitle, BADGE_DEFS } from "@/components/BadgeDisplay";
 
 // Avatar options — hacker personas
 const AVATARS = [
@@ -32,7 +33,8 @@ const RANK_COLORS: Record<string, string> = {
   "Elite Hacker": "text-purple-400",
 };
 
-const WEAK_AREA_THRESHOLD = 70; // Below 70% = weak area
+// All possible badges - show as locked/unlocked
+const ALL_BADGES = Object.entries(BADGE_DEFS);
 
 export default function Profile() {
   const { data: user } = useGetUser();
@@ -42,6 +44,9 @@ export default function Profile() {
 
   const rankColor = RANK_COLORS[user?.rankTier ?? "Bronze"] ?? "text-amber-600";
   const accuracy = stats?.accuracyRate ?? 0;
+  const streakDays = user?.streakDays ?? 0;
+  const winStreak = user?.winStreak ?? 0;
+  const badges = user?.badges ?? [];
 
   // Analyze weak areas from mode scores
   const modeScores = [
@@ -60,6 +65,8 @@ export default function Profile() {
   }
 
   const selectedAvatar = AVATARS.find(a => a.id === avatar) ?? AVATARS[0];
+  const isOnFire = streakDays >= 5;
+  const isUnstoppable = streakDays >= 10;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -75,13 +82,16 @@ export default function Profile() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left: Avatar + identity */}
         <div className="space-y-4">
-          <Card className="bg-card border-border text-center">
+          <Card className={`bg-card border-border text-center ${isUnstoppable ? "shadow-[0_0_20px_rgba(248,113,113,0.2)]" : isOnFire ? "shadow-[0_0_16px_rgba(251,146,60,0.15)]" : ""}`}>
             <CardContent className="p-6">
               <motion.div
                 key={avatar}
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-5xl mx-auto mb-3"
+                className={`w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-5xl mx-auto mb-3 ${
+                  isUnstoppable ? "border-red-400/50 shadow-[0_0_16px_rgba(248,113,113,0.4)]" :
+                  isOnFire ? "border-orange-400/50 shadow-[0_0_12px_rgba(251,146,60,0.3)]" : ""
+                }`}
               >
                 {selectedAvatar.emoji}
               </motion.div>
@@ -90,11 +100,23 @@ export default function Profile() {
               <Badge className={`mt-2 text-xs ${rankColor} border-current bg-current/10`}>{user?.rankTier} Operator</Badge>
               <div className="mt-3 flex items-center justify-center gap-2 text-xs font-mono text-muted-foreground">
                 {user?.hackerType === "attacker" ? (
-                  <><Swords className="w-3 h-3 text-red-400" /><span className="text-red-400">Red Team</span></>
+                  <><Swords className="w-3 h-3 text-red-400" /><span className="text-red-400">Red Team · Attacker ⚔️</span></>
                 ) : (
-                  <><Shield className="w-3 h-3 text-primary" /><span className="text-primary">Blue Team</span></>
+                  <><Shield className="w-3 h-3 text-primary" /><span className="text-primary">Blue Team · Defender 🛡️</span></>
                 )}
               </div>
+              {/* Streak title */}
+              {streakDays >= 3 && (
+                <div className="flex justify-center mt-2">
+                  <StreakTitle streakDays={streakDays} />
+                </div>
+              )}
+              {/* Badges */}
+              {badges.length > 0 && (
+                <div className="flex justify-center flex-wrap gap-1 mt-3">
+                  <BadgeDisplay badges={badges} size="md" showLabels animate />
+                </div>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -114,7 +136,8 @@ export default function Profile() {
                 { icon: Target, label: "Total Score", value: (stats?.totalScore ?? 0).toLocaleString(), color: "text-primary" },
                 { icon: TrendingUp, label: "Accuracy", value: `${accuracy.toFixed(0)}%`, color: accuracy >= 80 ? "text-primary" : "text-yellow-400" },
                 { icon: Lightbulb, label: "Hint Points", value: user?.hintPoints ?? 0, color: "text-yellow-400" },
-                { icon: Flame, label: "Login Streak", value: `${user?.streakDays ?? 0} days`, color: "text-orange-400" },
+                { icon: Flame, label: "Login Streak", value: `${streakDays} days`, color: "text-orange-400" },
+                { icon: Zap, label: "Win Streak", value: `${winStreak} wins`, color: "text-primary" },
                 { icon: Trophy, label: "Games Played", value: stats?.gamesPlayed ?? 0, color: "text-muted-foreground" },
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between text-xs">
@@ -129,7 +152,7 @@ export default function Profile() {
           </Card>
         </div>
 
-        {/* Right: Avatar selector + performance */}
+        {/* Right: Avatar selector + performance + badges */}
         <div className="md:col-span-2 space-y-4">
           {/* Avatar picker */}
           {editing && (
@@ -160,6 +183,43 @@ export default function Profile() {
               </Card>
             </motion.div>
           )}
+
+          {/* Badge showcase */}
+          <Card className="bg-card border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                🏅 Achievement Badges
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-4">
+              <div className="grid grid-cols-2 gap-3">
+                {ALL_BADGES.map(([badgeId, def]) => {
+                  const unlocked = badges.includes(badgeId);
+                  return (
+                    <motion.div
+                      key={badgeId}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                        unlocked
+                          ? `${def.color} bg-current/5`
+                          : "border-border bg-muted/20 opacity-50"
+                      }`}
+                    >
+                      <span className="text-xl shrink-0">{def.icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate">{def.label}</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight">{def.desc}</p>
+                        {unlocked && (
+                          <span className="text-[9px] text-primary font-mono">✓ UNLOCKED</span>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Performance breakdown */}
           <Card className="bg-card border-border">
@@ -217,12 +277,15 @@ export default function Profile() {
                 {[
                   ["CALLSIGN", user?.username ?? "UNKNOWN"],
                   ["PERSONA", `${selectedAvatar.emoji} ${selectedAvatar.name}`],
-                  ["ALLEGIANCE", user?.hackerType === "attacker" ? "⚔ RED TEAM" : "🛡 BLUE TEAM"],
+                  ["ALLEGIANCE", user?.hackerType === "attacker" ? "⚔ RED TEAM · ATTACKER" : "🛡 BLUE TEAM · DEFENDER"],
                   ["CLEARANCE", user?.rankTier ?? "Bronze"],
                   ["LEVEL", `${user?.level ?? 1} (${user?.xp ?? 0} XP)`],
                   ["ACCURACY", `${(stats?.accuracyRate ?? 0).toFixed(1)}%`],
+                  ["LOGIN STREAK", `${streakDays} days${streakDays >= 3 ? ` — ${user?.streakTitle ?? ""}` : ""}`],
+                  ["WIN STREAK", `${winStreak} consecutive wins`],
                   ["MISSIONS COMPLETED", stats?.gamesPlayed ?? 0],
                   ["SKILL POINTS", user?.skillPoints ?? 0],
+                  ["BADGES", badges.length > 0 ? badges.length + " earned" : "None yet"],
                   ["STATUS", "ACTIVE"],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between border-b border-border pb-1.5">

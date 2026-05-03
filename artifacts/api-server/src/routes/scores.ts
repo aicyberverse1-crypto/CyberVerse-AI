@@ -1,9 +1,9 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, scoresTable } from "@workspace/db";
-import { eq, sum, count, desc } from "drizzle-orm";
+import { eq, sum, count, desc, and } from "drizzle-orm";
 import { SubmitScoreBody } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth";
-import { getRankTier } from "../lib/userProfile";
+import { getRankTier, computeBadges, getStreakTitle } from "../lib/userProfile";
 
 const router: IRouter = Router();
 
@@ -42,6 +42,9 @@ router.post("/score", requireAuth, async (req: AuthRequest, res): Promise<void> 
     newAvgResponseTime = (prevTotal + responseTimeMs) / newTotalAnswers;
   }
 
+  // Win streak
+  const newWinStreak = isCorrect ? (user.winStreak ?? 0) + 1 : 0;
+
   // Hint points reward for correct answers (+5 per correct)
   const hintPointsEarned = isCorrect ? 5 : 0;
   const newHintPoints = user.hintPoints + hintPointsEarned;
@@ -59,6 +62,35 @@ router.post("/score", requireAuth, async (req: AuthRequest, res): Promise<void> 
   const newDailyScore = isNewDay ? score : user.dailyScore + score;
   const newLastDailyReset = isNewDay ? now : (lastReset ?? now);
 
+  // Compute phishing correct answers for badge eligibility
+  const phishingStats = await db
+    .select({ total: count() })
+    .from(scoresTable)
+    .where(and(eq(scoresTable.userId, userId), eq(scoresTable.mode, "phishing")));
+  const phishingCorrect = Number(phishingStats[0]?.total ?? 0);
+
+  // Compute updated user snapshot for badge calculation (before update)
+  const updatedSnapshot = {
+    ...user,
+    totalAnswers: newTotalAnswers,
+    correctAnswers: newCorrectAnswers,
+    averageResponseTime: newAvgResponseTime,
+    isTopHacker: user.isTopHacker,
+  };
+
+  // Compute badges
+  const newBadges = computeBadges(updatedSnapshot, phishingCorrect);
+
+  // Auto-add defender_pro badge based on defense score
+  const defenseScoreRow = await db
+    .select({ total: sum(scoresTable.score) })
+    .from(scoresTable)
+    .where(and(eq(scoresTable.userId, userId), eq(scoresTable.mode, "defense")));
+  const defenseTotal = Number(defenseScoreRow[0]?.total ?? 0);
+  if (defenseTotal >= 300 && !newBadges.includes("defender_pro")) {
+    newBadges.push("defender_pro");
+  }
+
   await db
     .update(usersTable)
     .set({
@@ -74,11 +106,20 @@ router.post("/score", requireAuth, async (req: AuthRequest, res): Promise<void> 
       totalAnswers: newTotalAnswers,
       correctAnswers: newCorrectAnswers,
       averageResponseTime: newAvgResponseTime,
+      winStreak: newWinStreak,
+      badges: newBadges,
     })
     .where(eq(usersTable.id, userId));
 
   // Update top hacker flag
   await updateTopHacker();
+
+  // Refresh the user to check if top_hacker badge should be added
+  const [refreshed] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  if (refreshed.isTopHacker && !newBadges.includes("top_hacker")) {
+    newBadges.push("top_hacker");
+    await db.update(usersTable).set({ badges: newBadges }).where(eq(usersTable.id, userId));
+  }
 
   res.json({
     totalScore: newTotalScore,
@@ -90,6 +131,9 @@ router.post("/score", requireAuth, async (req: AuthRequest, res): Promise<void> 
     rankTier: newRankTier,
     skillPoints: newSkillPoints,
     newSkillPoint: leveledUp,
+    badges: newBadges,
+    winStreak: newWinStreak,
+    streakTitle: getStreakTitle(user.streakDays),
   });
 });
 
@@ -170,7 +214,10 @@ router.get("/stats/dashboard", requireAuth, async (req: AuthRequest, res): Promi
     rankTier: user.rankTier,
     accuracyRate: user.accuracyRate,
     streakDays: user.streakDays,
+    winStreak: user.winStreak ?? 0,
     dailyScore: user.dailyScore,
+    badges: (user.badges as string[]) ?? [],
+    streakTitle: user.streakDays >= 3 ? (user.streakDays >= 10 ? "Unstoppable 🔥🔥" : user.streakDays >= 5 ? "On Fire 🔥" : "Rising ⚡") : null,
     recentActivity: recentActivity.map((a) => ({
       mode: a.mode,
       score: a.score,

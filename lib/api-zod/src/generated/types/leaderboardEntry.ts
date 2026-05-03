@@ -16,4 +16,9 @@ export interface LeaderboardEntry {
   rankTier: string;
   hackerType: string;
   isTopHacker: boolean;
+  badges: string[];
+  streakDays: number;
+  winStreak: number;
+  /** @nullable */
+  streakTitle: string | null;
 }

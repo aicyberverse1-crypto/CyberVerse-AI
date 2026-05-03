@@ -23,6 +23,10 @@ export interface DashboardStats {
   rankTier: string;
   accuracyRate: number;
   streakDays: number;
+  winStreak: number;
   dailyScore: number;
+  badges: string[];
+  /** @nullable */
+  streakTitle: string | null;
   recentActivity: ActivityItem[];
 }

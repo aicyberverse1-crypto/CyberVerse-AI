@@ -46,8 +46,11 @@ export const LoginResponse = zod.object({
     rankTier: zod.string(),
     accuracyRate: zod.number(),
     streakDays: zod.number(),
+    winStreak: zod.number(),
     dailyScore: zod.number(),
     isTopHacker: zod.boolean(),
+    badges: zod.array(zod.string()),
+    streakTitle: zod.string().nullable(),
     lastClaimedAt: zod.string().nullable(),
     createdAt: zod.string(),
   }),
@@ -69,8 +72,11 @@ export const GetUserResponse = zod.object({
   rankTier: zod.string(),
   accuracyRate: zod.number(),
   streakDays: zod.number(),
+  winStreak: zod.number(),
   dailyScore: zod.number(),
   isTopHacker: zod.boolean(),
+  badges: zod.array(zod.string()),
+  streakTitle: zod.string().nullable(),
   lastClaimedAt: zod.string().nullable(),
   createdAt: zod.string(),
 });
@@ -95,8 +101,11 @@ export const SetHackerTypeResponse = zod.object({
   rankTier: zod.string(),
   accuracyRate: zod.number(),
   streakDays: zod.number(),
+  winStreak: zod.number(),
   dailyScore: zod.number(),
   isTopHacker: zod.boolean(),
+  badges: zod.array(zod.string()),
+  streakTitle: zod.string().nullable(),
   lastClaimedAt: zod.string().nullable(),
   createdAt: zod.string(),
 });
@@ -172,6 +181,10 @@ export const GetLeaderboardResponseItem = zod.object({
   rankTier: zod.string(),
   hackerType: zod.string(),
   isTopHacker: zod.boolean(),
+  badges: zod.array(zod.string()),
+  streakDays: zod.number(),
+  winStreak: zod.number(),
+  streakTitle: zod.string().nullable(),
 });
 export const GetLeaderboardResponse = zod.array(GetLeaderboardResponseItem);
 
@@ -193,7 +206,10 @@ export const GetDashboardStatsResponse = zod.object({
   rankTier: zod.string(),
   accuracyRate: zod.number(),
   streakDays: zod.number(),
+  winStreak: zod.number(),
   dailyScore: zod.number(),
+  badges: zod.array(zod.string()),
+  streakTitle: zod.string().nullable(),
   recentActivity: zod.array(
     zod.object({
       mode: zod.string(),

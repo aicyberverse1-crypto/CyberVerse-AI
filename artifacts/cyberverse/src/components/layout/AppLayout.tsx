@@ -9,6 +9,7 @@ import { useGetUser } from "@workspace/api-client-react";
 import { removeToken } from "@/lib/auth";
 import AiChatWidget from "@/components/AiChatWidget";
 import { Badge } from "@/components/ui/badge";
+import { BadgeDisplay, StreakTitle } from "@/components/BadgeDisplay";
 
 const NAV_ITEMS = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, group: "main" },
@@ -60,8 +61,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const xpPercent = user ? (user.xp % 100) : 0;
   const rankColor = RANK_COLORS[user?.rankTier ?? "Bronze"] ?? "text-amber-600";
+  const streakDays = user?.streakDays ?? 0;
+  const isOnFire = streakDays >= 5;
+  const isUnstoppable = streakDays >= 10;
 
-  // Group nav items for sidebar sections
+  // Groups for sidebar sections
   const groups = ["main", "play", "intel", "progress", "tools"];
 
   return (
@@ -83,12 +87,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
         {/* User mini profile */}
         {user && (
-          <div className="px-4 py-3 border-b border-border">
+          <div className={`px-4 py-3 border-b border-border ${isUnstoppable ? "bg-red-400/5" : isOnFire ? "bg-orange-400/5" : ""}`}>
             <div className="flex items-center gap-2">
               <div className={`text-xs font-bold font-mono ${user.hackerType === "attacker" ? "text-red-400" : "text-primary"}`}>
                 {user.hackerType === "attacker" ? "⚔" : "🛡"} {user.username}
               </div>
             </div>
+            {/* Streak title */}
+            {streakDays >= 3 && (
+              <div className="mt-1">
+                <StreakTitle streakDays={streakDays} className="text-[9px]" animate={false} />
+              </div>
+            )}
             <div className={`text-[10px] font-semibold ${rankColor} mt-0.5`}>{user.rankTier}</div>
             <div className="flex items-center gap-2 mt-1.5">
               <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
@@ -106,9 +116,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <span className="text-yellow-400 font-bold">{user.hintPoints}</span> HP
               </span>
               <span className="text-muted-foreground">
-                🔥 <span className="text-orange-400 font-bold">{user.streakDays}</span>d
+                🔥 <span className="text-orange-400 font-bold">{streakDays}</span>d
               </span>
+              {user.winStreak > 0 && (
+                <span className="text-primary font-bold">
+                  ⚡ {user.winStreak}W
+                </span>
+              )}
             </div>
+            {/* Badges */}
+            {user.badges && user.badges.length > 0 && (
+              <div className="mt-2">
+                <BadgeDisplay badges={user.badges} size="sm" animate={false} />
+              </div>
+            )}
           </div>
         )}
 
@@ -172,7 +193,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             SOC TERMINAL v3.0 — {location.replace("/", "").replace(/-/g, " ").toUpperCase() || "DASHBOARD"}
           </div>
           {user && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* Streak title in navbar */}
+              {streakDays >= 3 && (
+                <StreakTitle streakDays={streakDays} className="text-[9px]" animate={false} />
+              )}
               <div className="flex items-center gap-1.5 px-2 py-1 bg-yellow-400/10 rounded border border-yellow-400/20">
                 <Lightbulb className="w-3 h-3 text-yellow-400" />
                 <span className="text-xs font-bold text-yellow-400">{user.hintPoints}</span>
@@ -186,7 +211,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   👑 Top Hacker
                 </Badge>
               )}
-              <div className="flex items-center gap-2 px-2 py-1 bg-muted/50 rounded border border-border">
+              <div className={`flex items-center gap-2 px-2 py-1 rounded border ${
+                isUnstoppable
+                  ? "bg-red-400/10 border-red-400/30 shadow-[0_0_12px_rgba(248,113,113,0.3)]"
+                  : isOnFire
+                  ? "bg-orange-400/10 border-orange-400/30 shadow-[0_0_10px_rgba(251,146,60,0.25)]"
+                  : "bg-muted/50 border-border"
+              }`}>
                 <Zap className="w-3 h-3 text-primary" />
                 <span className="text-xs font-mono">{user.username}</span>
                 <span className="text-[10px] text-muted-foreground">Lv{user.level}</span>

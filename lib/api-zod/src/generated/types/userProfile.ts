@@ -19,8 +19,12 @@ export interface UserProfile {
   rankTier: string;
   accuracyRate: number;
   streakDays: number;
+  winStreak: number;
   dailyScore: number;
   isTopHacker: boolean;
+  badges: string[];
+  /** @nullable */
+  streakTitle: string | null;
   /** @nullable */
   lastClaimedAt: string | null;
   createdAt: string;

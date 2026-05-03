@@ -8,7 +8,9 @@ import { logger } from "./logger";
 export async function runMigrations(): Promise<void> {
   try {
     await pool.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user'
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS win_streak INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS badges JSONB NOT NULL DEFAULT '[]';
     `);
     logger.info("Migrations applied successfully.");
   } catch (err) {
