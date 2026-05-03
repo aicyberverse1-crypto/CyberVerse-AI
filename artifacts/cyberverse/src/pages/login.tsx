@@ -19,11 +19,17 @@ export default function Login() {
     mutation: {
       onSuccess: (data) => {
         setToken(data.token);
-        toast({
-          title: "Access Granted",
-          description: "Welcome back, agent.",
-        });
-        setLocation("/dashboard");
+        const role = (data.user as unknown as { role?: string }).role;
+        if (role === "admin") {
+          // Admin users go to the Admin Control Panel
+          localStorage.setItem("cv_is_admin", "true");
+          toast({ title: "Admin Access Granted", description: "Welcome, Administrator." });
+          setLocation("/admin");
+        } else {
+          localStorage.removeItem("cv_is_admin");
+          toast({ title: "Access Granted", description: "Welcome back, agent." });
+          setLocation("/dashboard");
+        }
       },
       onError: (error) => {
         toast({
@@ -83,8 +89,8 @@ export default function Login() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
               disabled={loginMutation.isPending}
             >

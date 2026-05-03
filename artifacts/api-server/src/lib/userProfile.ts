@@ -4,6 +4,7 @@ export function serializeUser(user: User) {
   return {
     id: user.id,
     username: user.username,
+    role: user.role,
     xp: user.xp,
     level: user.level,
     totalScore: user.totalScore,

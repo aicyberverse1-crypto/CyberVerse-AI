@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
 import { type Request, type Response, type NextFunction } from "express";
+import { db, usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const JWT_SECRET = process.env.SESSION_SECRET ?? "cyberverse-secret-key";
 
@@ -33,4 +35,26 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
   }
+}
+
+// Admin-only middleware: validates JWT then checks role from DB
+export async function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const token = authHeader.slice(7);
+  try {
+    req.user = verifyToken(token);
+  } catch {
+    res.status(401).json({ error: "Invalid or expired token" });
+    return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user.userId));
+  if (!user || user.role !== "admin") {
+    res.status(403).json({ error: "Forbidden: Admin access required" });
+    return;
+  }
+  next();
 }

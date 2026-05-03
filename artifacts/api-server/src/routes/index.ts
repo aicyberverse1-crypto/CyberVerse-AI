@@ -8,6 +8,7 @@ import aiRouter from "./ai";
 import skillsRouter from "./skills";
 import missionsRouter from "./missions";
 import multiplayerRouter from "./multiplayer";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(aiRouter);
 router.use(skillsRouter);
 router.use(missionsRouter);
 router.use(multiplayerRouter);
+router.use(adminRouter);
 
 export default router;

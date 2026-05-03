@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedQuestions } from "./lib/seed";
+import { runMigrations, seedAdmin } from "./lib/adminSeed";
 
 const rawPort = process.env["PORT"];
 
@@ -23,5 +24,10 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
-  seedQuestions().catch((err) => logger.error({ err }, "Failed to seed questions"));
+
+  // Run DB migrations first, then seed data
+  runMigrations()
+    .then(() => seedAdmin())
+    .then(() => seedQuestions())
+    .catch((err) => logger.error({ err }, "Startup initialization failed"));
 });
