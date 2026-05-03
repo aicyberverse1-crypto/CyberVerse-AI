@@ -1,0 +1,176 @@
+Act as an expert full-stack developer, QA engineer, and system architect.
+
+Your task is to automatically detect, fix, complete, and optimize the entire CyberVerse AI project.
+
+IMPORTANT RULES:
+- DO NOT break existing working features
+- If a feature is already complete → leave it untouched
+- If partially implemented → complete it
+- If missing → fully implement it
+- Always write clean, modular, production-ready code
+- Add comments for every fix or addition
+
+-----------------------------------
+🔍 STEP 1: FULL SYSTEM SCAN
+-----------------------------------
+Analyze the entire project:
+- Frontend
+- Backend
+- Database
+- API connections
+
+Detect:
+- Errors
+- Missing features
+- Broken logic
+- Performance issues
+
+-----------------------------------
+🛠️ STEP 2: AUTO FIX ERRORS
+-----------------------------------
+Fix:
+- Syntax errors
+- API failures
+- Broken UI components
+- Database connection issues
+- Authentication bugs
+
+-----------------------------------
+🔐 STEP 3: COMPLETE AUTH SYSTEM
+-----------------------------------
+If missing or incomplete:
+- Implement login/register
+- Add JWT authentication
+- Ensure new users get:
+  - 500 hint points
+  - Bronze rank
+  - Streak = 0
+
+-----------------------------------
+🤖 STEP 4: FIX & COMPLETE AI SYSTEM
+-----------------------------------
+Ensure:
+- AI chatbot works smoothly
+- Hint point deduction works correctly
+- AI adapts to user skill
+- AI generates missions dynamically
+
+-----------------------------------
+🎮 STEP 5: FIX GAMEPLAY SYSTEM
+-----------------------------------
+Ensure:
+- Each mission has 5–8 questions
+- Questions load properly
+- Answer validation works
+- Score updates correctly
+
+-----------------------------------
+🧠 STEP 6: ADAPTIVE DIFFICULTY
+-----------------------------------
+If missing:
+- Track performance
+- Increase difficulty dynamically
+
+-----------------------------------
+🌳 STEP 7: SKILL TREE
+-----------------------------------
+Ensure:
+- Defender & Attacker paths exist
+- Skills unlock with XP
+- Skills affect gameplay
+
+-----------------------------------
+🏆 STEP 8: RANK SYSTEM
+-----------------------------------
+Ensure:
+- Rank progression works
+- Bronze → Elite Hacker system implemented
+
+-----------------------------------
+🏅 STEP 9: LEADERBOARD
+-----------------------------------
+Ensure:
+- Scores update correctly
+- Leaderboard displays users
+- “Top Hacker of the Day” exists
+
+-----------------------------------
+🎁 STEP 10: REWARD SYSTEM
+-----------------------------------
+Ensure:
+- Daily bonus points
+- Streak rewards
+- XP system
+
+-----------------------------------
+🔥 STEP 11: MULTIPLAYER
+-----------------------------------
+If missing:
+- Implement basic challenge system
+- Compare scores between players
+
+-----------------------------------
+🎬 STEP 12: STORY MODE
+-----------------------------------
+If missing:
+- Add campaign progression
+- Unlock missions step-by-step
+
+-----------------------------------
+🎨 STEP 13: UI FIX & POLISH
+-----------------------------------
+Fix:
+- Broken layouts
+- Missing styles
+- Non-responsive components
+
+Enhance:
+- Hacker-style theme
+- Animations
+- Smooth transitions
+
+-----------------------------------
+📊 STEP 14: DASHBOARD
+-----------------------------------
+Ensure:
+- Performance stats visible
+- Accuracy tracking works
+
+-----------------------------------
+⚡ STEP 15: PERFORMANCE OPTIMIZATION
+-----------------------------------
+Improve:
+- API speed
+- Database queries
+- Reduce lag
+- Optimize rendering
+
+-----------------------------------
+🛡️ STEP 16: SECURITY
+-----------------------------------
+Ensure:
+- Input validation
+- Secure APIs
+- No sensitive data exposed
+
+-----------------------------------
+📋 STEP 17: FINAL REPORT
+-----------------------------------
+After all fixes, generate:
+
+1. List of fixes applied
+2. Features added
+3. Bugs resolved
+4. Performance improvements
+5. Final system status (READY / NEEDS MINOR FIXES)
+
+-----------------------------------
+🎯 FINAL GOAL
+-----------------------------------
+Turn this project into:
+- Fully working
+- Bug-free
+- Optimized
+- Competition-ready
+
+Act like a perfectionist engineer and do NOT stop until everything is working perfectly.

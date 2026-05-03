@@ -3,38 +3,162 @@ import { count } from "drizzle-orm";
 import { logger } from "./logger";
 
 const questions = [
-  // Phishing
+  // ====== PHISHING — EASY ======
   {
     mode: "phishing",
     scenario: `FROM: support@paypa1.com\nSUBJECT: Urgent: Your account has been suspended!\n\nDear valued customer,\n\nYour PayPal account has been limited due to suspicious activity. Click here immediately to restore access:\nhttp://paypa1-secure.net/restore?token=abc123\n\nFailure to verify within 24 hours will result in permanent account closure.\n\n- PayPal Security Team`,
     options: ["Legitimate PayPal email — click the link to restore access", "Phishing attempt — suspicious sender domain and urgency tactics", "Spam email — safe to ignore", "Security alert — follow the instructions carefully"],
     correctAnswer: 1,
-    explanation: "This is a phishing email. Notice 'paypa1.com' (with a '1' instead of 'l'), the suspicious URL 'paypa1-secure.net', and the urgency tactics creating fear. Legitimate companies never ask you to click unverified links.",
+    explanation: "This is a phishing email. Notice 'paypa1.com' (with a '1' instead of 'l'), the suspicious URL 'paypa1-secure.net', and the urgency tactics. Legitimate companies never ask you to click unverified links.",
     difficulty: "easy",
-  },
-  {
-    mode: "phishing",
-    scenario: `FROM: hr@yourcompany.com\nSUBJECT: Important: Salary Review Document\n\nHi,\n\nPlease review the attached salary review document before our meeting tomorrow.\n\n[Salary_Review_2024.exe]\n\nBest regards,\nHR Department`,
-    options: ["Open the attachment — it's from HR", "Reply asking for confirmation first", "Suspicious — executable attachment from HR is a red flag", "Forward to colleagues for their review"],
-    correctAnswer: 2,
-    explanation: "HR departments never send .exe files. Executable attachments are a classic malware delivery method. Always verify unexpected attachments directly with the sender through a separate communication channel.",
-    difficulty: "medium",
   },
   {
     mode: "phishing",
     scenario: `TEXT MESSAGE: Your bank has detected unauthorized access. Verify your identity now: +1-555-BANK-NOW or visit bank-secure-verify.com. Don't delay or account will be frozen.`,
     options: ["Call the number immediately — it's urgent", "Visit the website to verify", "Smishing attack — call your bank's official number instead", "Reply STOP to unsubscribe"],
     correctAnswer: 2,
-    explanation: "This is smishing (SMS phishing). Real banks never contact you via unofficial numbers or non-bank domains. Always call the number on the back of your card or official bank website.",
+    explanation: "This is smishing (SMS phishing). Real banks never contact you via unofficial numbers or non-bank domains. Always call the number on the back of your card.",
     difficulty: "easy",
   },
-  // Defense
+  {
+    mode: "phishing",
+    scenario: `FROM: noreply@amazon-order-update.com\nSUBJECT: Your order #483-2847193 has been delayed\n\nDear Customer,\n\nYour recent order has been held due to a payment issue. Please confirm your billing details at: http://amazon-order-update.com/billing\n\nAmazon Customer Service`,
+    options: ["Log in to Amazon directly to check your order", "Click the link — it's from Amazon customer service", "Phishing — amazon-order-update.com is not Amazon's domain", "Call Amazon support at the number in the email"],
+    correctAnswer: 2,
+    explanation: "Amazon's real domain is amazon.com. The sender 'amazon-order-update.com' is a lookalike domain used in phishing. Always navigate directly to amazon.com instead of clicking email links.",
+    difficulty: "easy",
+  },
+  {
+    mode: "phishing",
+    scenario: `FROM: security@google.com\nSUBJECT: Sign-in attempt blocked\n\nWe blocked a sign-in to your Google Account from a new device.\nLocation: Russia | Device: Windows PC\n\nIf this was you, click Confirm. If not, click Secure Your Account.\n\n[SECURE YOUR ACCOUNT NOW]`,
+    options: ["Click Secure Your Account immediately", "Legitimate — Google sends these alerts", "Check — hover over the link first; if it goes to google.com it is safe", "Delete immediately — Google never sends emails"],
+    correctAnswer: 2,
+    explanation: "Even legitimate-looking Google alerts can be phishing. Always hover over links to verify they go to accounts.google.com. Better yet, open a new browser tab and go directly to your Google account.",
+    difficulty: "easy",
+  },
+  {
+    mode: "phishing",
+    scenario: `LINKEDIN MESSAGE from: Michael Thompson (Recruiter at Fortune500Corp)\n\n"Hi! We found your profile and you're a perfect fit for a $180K remote role. No interview needed — just fill out this quick form to confirm interest: jobs-fortune500-apply.com/quick-apply"`,
+    options: ["Fill out the form — it sounds like a great opportunity", "Reply asking for more details before clicking", "Social engineering bait — unsolicited no-interview jobs are almost always scams", "Report to LinkedIn and do not click"],
+    correctAnswer: 3,
+    explanation: "Legitimate recruiters never offer high-paying jobs with no interview via external links. This is a job scam designed to harvest your personal information. Report and ignore.",
+    difficulty: "easy",
+  },
+  // ====== PHISHING — MEDIUM ======
+  {
+    mode: "phishing",
+    scenario: `FROM: hr@yourcompany.com\nSUBJECT: Important: Salary Review Document\n\nHi,\n\nPlease review the attached salary review document before our meeting tomorrow.\n\n[Salary_Review_2024.exe]\n\nBest regards,\nHR Department`,
+    options: ["Open the attachment — it's from HR", "Reply asking for confirmation first", "Suspicious — executable attachment from HR is a red flag", "Forward to colleagues for their review"],
+    correctAnswer: 2,
+    explanation: "HR departments never send .exe files. Executable attachments are a classic malware delivery method. Always verify unexpected attachments directly with the sender through a separate channel.",
+    difficulty: "medium",
+  },
+  {
+    mode: "phishing",
+    scenario: `FROM: it-support@yourcompany-helpdesk.net\nSUBJECT: Mandatory Security Update — Action Required Today\n\nDear Employee,\n\nDue to a critical vulnerability, all employees must update their VPN credentials immediately.\n\nClick here: https://yourcompany-helpdesk.net/vpn-update\n\nDeadline: End of business today. Non-compliance will result in account suspension.`,
+    options: ["Update credentials immediately — it's mandatory", "Email looks legitimate since it mentions your company name", "Spear phishing — verify with IT via internal channels before clicking", "Forward to your manager to decide"],
+    correctAnswer: 2,
+    explanation: "This is spear phishing — targeting employees using company-specific context. The domain 'yourcompany-helpdesk.net' is NOT your company's domain. Always verify IT requests through internal ticketing systems or by calling IT directly.",
+    difficulty: "medium",
+  },
+  {
+    mode: "phishing",
+    scenario: `FROM: docusign-noreply@docusign-contract.com\nSUBJECT: [ACTION REQUIRED] Contract ready for your signature\n\nHello,\n\nA document has been shared with you for electronic signature.\n\nDocument: NDA_Consulting_Agreement.pdf\nSent by: contracts@bigclient.com\n\n[REVIEW & SIGN DOCUMENT]`,
+    options: ["Sign it — DocuSign emails look exactly like this", "Check — real DocuSign emails come from @docusign.com not @docusign-contract.com", "Call the sender to confirm before signing", "It depends whether you are expecting a contract"],
+    correctAnswer: 1,
+    explanation: "Real DocuSign emails come from @docusign.com. 'docusign-contract.com' is a lookalike domain. These attacks target business email users who regularly receive legitimate DocuSign requests and may not notice the difference.",
+    difficulty: "medium",
+  },
+  {
+    mode: "phishing",
+    scenario: `VOICE CALL: "This is the IRS. We have a warrant for your arrest due to unpaid back taxes totaling $4,247. To avoid arrest, you must purchase $4,247 in Google Play gift cards within 2 hours and call us back at 1-800-IRS-CALL."`,
+    options: ["Buy the gift cards — they have a warrant", "Ask them to mail you the official paperwork instead", "Government vishing scam — the IRS never calls with arrest threats or asks for gift cards", "Hang up and call your lawyer immediately"],
+    correctAnswer: 2,
+    explanation: "The IRS communicates via mail, never by threatening phone calls. No legitimate government agency accepts gift card payments. This is a vishing (voice phishing) scam targeting fear of authority.",
+    difficulty: "medium",
+  },
+  {
+    mode: "phishing",
+    scenario: `FROM: microsoft-account@microsoft-security.org\nSUBJECT: Your Microsoft 365 license expires in 48 hours\n\nYour subscription has not been renewed due to a payment failure. To maintain access to your files and emails, update your payment method immediately.\n\n[UPDATE PAYMENT — KEEP ACCESS]`,
+    options: ["Update payment — losing access to Office 365 is urgent", "Phishing — microsoft-security.org is not a Microsoft domain", "Legitimate — Microsoft uses multiple domains for billing", "Check your Microsoft account at account.microsoft.com first"],
+    correctAnswer: 3,
+    explanation: "Always verify billing issues by going directly to account.microsoft.com in a new browser tab. Microsoft's real domains are microsoft.com and office.com — not 'microsoft-security.org'.",
+    difficulty: "medium",
+  },
+  // ====== PHISHING — HARD ======
+  {
+    mode: "phishing",
+    scenario: `FROM: ceo.johnson@acmecorp.co (your company is acmecorp.com)\nSUBJECT: Urgent wire transfer needed\n\nHi [Your name],\n\nI'm in a board meeting and can't call. I need you to process an emergency wire transfer of $47,500 to close an acquisition. Send to: Account 4729384, Routing 021000021. Keep this confidential until announced.\n\n- Thomas Johnson, CEO`,
+    options: ["Process immediately — it's from the CEO", "Reply to confirm before transferring", "BEC (Business Email Compromise) — verify via phone call to CEO's known number", "Transfer but CC legal and finance first"],
+    correctAnswer: 2,
+    explanation: "This is a Business Email Compromise (BEC) attack. Note 'acmecorp.co' vs 'acmecorp.com'. CEOs never request secret wire transfers via email. Always verify financial requests via a known phone number — BEC costs businesses $26B+ annually.",
+    difficulty: "hard",
+  },
+  {
+    mode: "phishing",
+    scenario: `You receive an email from your bank's actual domain (yourbank.com) asking you to verify your account. The email has perfect branding, correct logos, and a personalized greeting with your full name. The link goes to yourbank.com — but inspection shows it has a Punycode domain: xn--yurbnk-5va.com which renders as yourbank.com in most browsers.`,
+    options: ["Click — it's from your actual bank domain", "Homograph attack — Punycode makes a different domain look identical", "Check SSL certificate first — if green it's safe", "Forward to your bank's fraud email to investigate"],
+    correctAnswer: 1,
+    explanation: "This is a homograph/IDN attack using Punycode. Unicode characters from other alphabets can look identical to Latin letters in browsers. Modern browsers show the Punycode form in the address bar — always check the actual URL in the address bar, not the displayed text.",
+    difficulty: "hard",
+  },
+  {
+    mode: "phishing",
+    scenario: `A trusted colleague forwards you an email chain from 3 months ago, adding: "Hey, I thought you'd find this useful — the attachment has the updated framework we discussed." The attachment is named 'Q3_Strategy_Framework_v2.docx'. Your colleague's email address is correct and you DO have a relationship with them.`,
+    options: ["Open it — you know this person", "Spear phishing via compromised account — verify the file out-of-band", "Safe since the email address is verified correct", "Open in a sandboxed environment then decide"],
+    correctAnswer: 3,
+    explanation: "A trusted contact's compromised account is one of the most effective attack vectors. Even if the sender is genuine, verify unexpected attachments via a separate channel (text/call). Opening in a sandbox is also a good practice. Never assume a known sender means a safe attachment.",
+    difficulty: "hard",
+  },
+  // ====== PHISHING — EXPERT ======
+  {
+    mode: "phishing",
+    scenario: `You receive a Microsoft Teams message from your IT department: "We're rolling out a new SSO update. Please scan this QR code to re-authenticate your credentials on the new system." The QR code leads to login.microsoftonline.com with a perfect OAuth flow — but captures your session token via an AiTM (Adversary-in-the-Middle) proxy before forwarding you to the real Microsoft page.`,
+    options: ["Scan the QR and authenticate — the URL is legitimate Microsoft", "Adversary-in-the-Middle phishing — even real URLs can be proxied to steal tokens", "QR codes from IT are always safe", "Enable MFA first then proceed"],
+    correctAnswer: 1,
+    explanation: "AiTM attacks proxy legitimate authentication pages to steal session tokens, bypassing MFA entirely. The victim sees the real Microsoft login but the proxy captures the authenticated session. Defense: use phishing-resistant MFA (FIDO2/passkeys) which are tied to the legitimate origin.",
+    difficulty: "expert",
+  },
+  {
+    mode: "phishing",
+    scenario: `A security researcher reports a new technique: attackers register domains like 'yourcompany.com.attacker.io'. An email arrives from 'compliance@yourcompany.com.security-audit.io' referencing your last internal audit date, your CISO's name, and specific internal project names. How was the attacker likely able to personalize this attack so precisely?`,
+    options: ["Lucky guess — common details", "OSINT + LinkedIn/job postings + leaked internal documents", "The attacker has insider access", "Social media reconnaissance only"],
+    correctAnswer: 1,
+    explanation: "Advanced attackers use OSINT (Open Source Intelligence): LinkedIn for names/roles, job postings for internal tool names, GitHub for leaked configs, data broker sites for personal details. This level of personalization makes spear phishing 3x more effective than generic attacks.",
+    difficulty: "expert",
+  },
+  // ====== DEFENSE — EASY ======
+  {
+    mode: "defense",
+    scenario: "An employee reports they cannot access any files on their computer. Every file now has a '.encrypted' extension and there's a 'RANSOM_NOTE.txt' demanding 2 Bitcoin. The attack happened at 9:02 AM. What is your FIRST action?",
+    options: ["Pay the ransom immediately to recover files", "Isolate the infected machine from the network immediately", "Run antivirus scan on the machine", "Restart the computer to clear the infection"],
+    correctAnswer: 1,
+    explanation: "Ransomware spreads through network shares. Your FIRST priority is isolation — disconnect the machine from all network connections (ethernet, WiFi) to prevent lateral movement. Then assess backups, report to IR team, and never pay the ransom (no guarantee of recovery).",
+    difficulty: "easy",
+  },
+  {
+    mode: "defense",
+    scenario: "Your company's website is loading extremely slowly for all users. Server monitoring shows CPU at 100% and bandwidth maxed out. Thousands of different IP addresses are sending requests. What type of attack is this?",
+    options: ["SQL Injection — attackers are querying your database", "DDoS (Distributed Denial of Service) — flooding your server with traffic", "Brute force — trying to guess admin passwords", "XSS — injecting scripts into your website"],
+    correctAnswer: 1,
+    explanation: "A DDoS attack uses many distributed sources (often a botnet) to overwhelm a server with traffic. Unlike a DoS (single source), blocking one IP doesn't help. Solutions: rate limiting, CDN with DDoS protection (Cloudflare), and ISP-level traffic scrubbing.",
+    difficulty: "easy",
+  },
+  {
+    mode: "defense",
+    scenario: "A new employee asks you: 'Why can't I access the finance database? I'm in IT.' You check and they have Admin rights to all servers. What security principle is being violated?",
+    options: ["Defense in depth — they need multiple security layers", "Least privilege — users should only have the minimum access needed for their role", "Zero trust — all users should be denied by default", "Separation of duties — one person should not have all access"],
+    correctAnswer: 1,
+    explanation: "The Principle of Least Privilege (PoLP) means granting only the minimum permissions required for a user's specific role. IT admins should not automatically have access to finance systems. Overprivileged accounts are a top attack vector.",
+    difficulty: "easy",
+  },
+  // ====== DEFENSE — MEDIUM ======
   {
     mode: "defense",
     scenario: "Your company's web server is receiving 50,000 HTTP requests per second from thousands of different IP addresses. The server is becoming unresponsive. What type of attack is this and what's your first defense action?",
     options: ["SQL Injection — sanitize input fields", "DDoS attack — activate rate limiting and contact your CDN/ISP for traffic scrubbing", "Brute force — block the attacking IP", "Man-in-the-middle — enable HTTPS"],
     correctAnswer: 1,
-    explanation: "This is a Distributed Denial of Service (DDoS) attack. With traffic from thousands of IPs, blocking a single IP won't help. Rate limiting and CDN-based traffic scrubbing are the appropriate defenses.",
+    explanation: "This is a DDoS attack. Rate limiting and CDN-based traffic scrubbing are the appropriate defenses. With traffic from thousands of IPs, blocking a single IP won't help.",
     difficulty: "medium",
   },
   {
@@ -42,18 +166,93 @@ const questions = [
     scenario: "You detect unusual database queries like: ' OR '1'='1 — being sent to your login form. Thousands of these requests are being made. What is happening and what should you do?",
     options: ["DDoS attack — block all traffic", "SQL Injection attempt — implement parameterized queries and Web Application Firewall", "XSS attack — sanitize HTML output", "Session hijacking — regenerate session tokens"],
     correctAnswer: 1,
-    explanation: "This is a SQL injection attack. The payload ' OR '1'='1 attempts to bypass authentication. Fix: use parameterized queries/prepared statements, implement a WAF, and never concatenate user input into SQL strings.",
+    explanation: "This is SQL injection. The payload ' OR '1'='1 attempts to bypass authentication. Fix: use parameterized queries/prepared statements, implement a WAF, and never concatenate user input into SQL strings.",
     difficulty: "medium",
   },
+  {
+    mode: "defense",
+    scenario: "Your web application logs show repeated requests: GET /admin/../../../etc/passwd — returning HTTP 200. What attack is occurring and what data is being accessed?",
+    options: ["XSS attack — scripts being injected into pages", "Path traversal — attacker is reading your Linux password file", "SQL injection — database records being exfiltrated", "CSRF — session tokens being stolen"],
+    correctAnswer: 1,
+    explanation: "This is a path traversal (directory traversal) attack. '../' sequences navigate up directory levels. /etc/passwd contains Linux user account info. Fix: validate/sanitize file paths, use allowlists, and run your web server with minimal OS privileges.",
+    difficulty: "medium",
+  },
+  {
+    mode: "defense",
+    scenario: "A developer reports their app is vulnerable to XSS. An attacker can inject: <script>document.cookie</script> into a comment field that other users see. What is the primary defense?",
+    options: ["Rate limit comment submissions", "Encode/escape all user-supplied output and implement Content Security Policy", "Require HTTPS for all connections", "Use a WAF to block all scripts"],
+    correctAnswer: 1,
+    explanation: "XSS is prevented by encoding user-supplied data before rendering it in HTML (< becomes &lt;). Content Security Policy (CSP) headers provide defense-in-depth by whitelisting trusted script sources. Never trust user input — always encode on output.",
+    difficulty: "medium",
+  },
+  // ====== DEFENSE — HARD ======
   {
     mode: "defense",
     scenario: "An employee reports their computer is running slowly and making unusual network connections to an unknown IP address at 3 AM. Your monitoring shows encrypted traffic. What is the likely threat and response?",
     options: ["Hardware failure — replace the computer", "Malware/C2 infection — isolate the machine, run forensics, block the IP", "VPN issue — reconfigure network settings", "Windows update — let it complete"],
     correctAnswer: 1,
-    explanation: "This pattern — slow performance, unusual connections to unknown IPs at odd hours — indicates malware with a Command & Control (C2) server. Immediately isolate the machine to prevent spread, preserve forensic evidence, and investigate.",
+    explanation: "Slow performance + encrypted traffic to unknown IPs at odd hours = malware with Command & Control (C2). Isolate immediately to prevent spread, preserve forensic evidence, and investigate the C2 IP for threat intelligence.",
     difficulty: "hard",
   },
-  // Builder
+  {
+    mode: "defense",
+    scenario: "Your SIEM alerts: 'User account 'jsmith' performed 847 failed login attempts across 23 different servers in 4 minutes, then successfully logged in.' What attack succeeded and what should you do immediately?",
+    options: ["Account locked out — reset the password", "Credential stuffing succeeded — disable the account, force password reset, enable MFA, investigate blast radius", "Normal user behavior — SIEM false positive", "Brute force on single account — use CAPTCHA"],
+    correctAnswer: 1,
+    explanation: "This is credential stuffing — using leaked username/password pairs from other breaches across multiple systems. The successful login indicates a password reuse vulnerability. Immediate response: disable account, investigate all activity since first failed attempt, force org-wide MFA.",
+    difficulty: "hard",
+  },
+  {
+    mode: "defense",
+    scenario: "During a security audit, you find that your application generates session tokens as: base64(username + ':' + timestamp). A user has the token: dXNlcjoxNzA5MDU2MDAwMA== — what's wrong?",
+    options: ["The token is too short", "Session token is predictable — attacker can forge tokens for any user/time", "Base64 encoding is insecure — use hex instead", "Timestamps should not be included in tokens"],
+    correctAnswer: 1,
+    explanation: "Predictable session tokens are a critical vulnerability (OWASP A02). This token decodes to 'user:1709056000'. An attacker can forge valid tokens for any username. Session tokens must be cryptographically random (256-bit minimum) — never encoding predictable data.",
+    difficulty: "hard",
+  },
+  // ====== DEFENSE — EXPERT ======
+  {
+    mode: "defense",
+    scenario: "Your SOC detects: a Windows service account (svc_backup) queried LDAP for all domain admin accounts, ran BloodHound-like queries, then used DCSync to replicate credential hashes from your Domain Controller — all within 6 minutes of initial compromise. What APT technique is being used?",
+    options: ["Simple privilege escalation — patch the server", "Kerberoasting combined with DCSync — an APT performing Active Directory attack chain", "Botnet C2 communication — block the IP", "Ransomware pre-deployment — restore from backup"],
+    correctAnswer: 1,
+    explanation: "This is an AD attack chain: LDAP enumeration → BloodHound recon → DCSync (mimicking domain replication to dump NTLM hashes). Defense: implement Azure AD Privileged Identity Management, monitor DCSync operations in SIEM, apply tiered admin model, use Protected Users security group.",
+    difficulty: "expert",
+  },
+  {
+    mode: "defense",
+    scenario: "A threat hunter finds: PowerShell execution with 'EncodedCommand' flag, LOLBAS (Living Off the Land Binaries) usage (certutil.exe downloading files), followed by scheduled task creation. No malware signature detected by AV. What detection approach would catch this?",
+    options: ["Update antivirus signatures", "Behavioral/anomaly-based detection — monitor process chains, network telemetry, and hunt for LOLBAS abuse", "Firewall rules to block PowerShell", "File integrity monitoring"],
+    correctAnswer: 1,
+    explanation: "Fileless/LOLBAS attacks evade signature-based AV by using trusted system tools. Detection requires behavioral analysis: PowerShell script block logging, process creation monitoring (Sysmon), network telemetry, and UEBA. EDR solutions with behavioral engines catch these patterns.",
+    difficulty: "expert",
+  },
+  // ====== BUILDER — EASY ======
+  {
+    mode: "builder",
+    scenario: "You're building a user login page. A user enters their password. How should you store it in your database?",
+    options: ["Store it as plain text for easy retrieval", "Encrypt it with AES-256", "Hash it with bcrypt and a unique salt per user", "Store an MD5 hash of the password"],
+    correctAnswer: 2,
+    explanation: "Passwords must be hashed with a slow, salted algorithm like bcrypt or Argon2 — NEVER stored as plain text, and never with fast hashes like MD5 or SHA-1 which are vulnerable to rainbow table attacks. Each user needs a unique salt.",
+    difficulty: "easy",
+  },
+  {
+    mode: "builder",
+    scenario: "You're designing a login form. After 5 wrong password attempts, what should happen?",
+    options: ["Show the user the correct password hint", "Lock the account temporarily and alert the user via email", "Allow unlimited attempts — locking accounts hurts UX", "Increase the password length requirement"],
+    correctAnswer: 1,
+    explanation: "Account lockout after repeated failures prevents brute force and credential stuffing attacks. Best practice: progressive delays (not hard locks), alert user to suspicious activity, and log failed attempts for security monitoring.",
+    difficulty: "easy",
+  },
+  {
+    mode: "builder",
+    scenario: "You're building an API. A user sends: GET /api/user?id=1 and sees their profile. They change it to id=2 and see another user's private data. What vulnerability is this?",
+    options: ["SQL Injection — they're modifying database queries", "IDOR (Insecure Direct Object Reference) — no authorization check on the resource", "XSS — script injection via URL parameters", "CSRF — cross-site request forgery"],
+    correctAnswer: 1,
+    explanation: "Insecure Direct Object References (IDOR) occur when an API exposes internal IDs without authorization checks. Fix: always verify the requesting user owns or has permission to access the requested resource, regardless of which ID is in the URL.",
+    difficulty: "easy",
+  },
+  // ====== BUILDER — MEDIUM ======
   {
     mode: "builder",
     scenario: "You're designing the authentication system for a banking app. Which combination of security measures provides the strongest protection against unauthorized access?",
@@ -64,28 +263,129 @@ const questions = [
   },
   {
     mode: "builder",
+    scenario: "You need to transmit sensitive user data between your frontend and API. An attacker intercepts network traffic. What configuration ensures the data remains confidential in transit?",
+    options: ["Base64 encode all data before sending", "TLS 1.3 with HSTS enabled — encrypted transport with forced HTTPS", "Send data in POST bodies instead of GET parameters", "Use HTTP with firewall rules to block external access"],
+    correctAnswer: 1,
+    explanation: "TLS 1.3 encrypts data in transit. HSTS (HTTP Strict Transport Security) forces browsers to always use HTTPS, preventing downgrade attacks. Base64 is encoding, not encryption. POST vs GET only affects URL visibility, not network security.",
+    difficulty: "medium",
+  },
+  {
+    mode: "builder",
+    scenario: "Your app allows users to upload profile pictures. An attacker uploads a file named 'shell.php' disguised as an image. What is the best defense combination?",
+    options: ["Check file extension only — block .php, .exe, .js", "Validate MIME type server-side, strip EXIF data, rename files randomly, store outside web root, serve via CDN", "Limit file size to 2MB", "Scan with antivirus before saving"],
+    correctAnswer: 1,
+    explanation: "File upload security requires multiple defenses: server-side MIME type validation (not just extension), random file renaming (prevents direct execution), storage outside the web root, and CDN serving. Client-side validation is bypassable and insufficient alone.",
+    difficulty: "medium",
+  },
+  // ====== BUILDER — HARD ======
+  {
+    mode: "builder",
     scenario: "Your team is storing user passwords in the database. A security audit reveals they are stored as MD5 hashes. What is the critical security issue and how do you fix it?",
     options: ["MD5 is too slow — switch to SHA-1 for speed", "MD5 is cryptographically broken — migrate to bcrypt or Argon2 with salting", "The hashes should be encrypted, not hashed", "Add a SECRET prefix to each password before hashing"],
     correctAnswer: 1,
     explanation: "MD5 is cryptographically broken and rainbow table attacks can reverse it instantly. Modern password storage requires adaptive hashing algorithms like bcrypt or Argon2 that include built-in salting and are intentionally slow to resist brute force.",
     difficulty: "hard",
   },
-  // Escape Room
+  {
+    mode: "builder",
+    scenario: "Your React app makes API calls with the user's JWT token stored in localStorage. A security researcher reports this is insecure. Why, and what is the secure alternative?",
+    options: ["localStorage tokens expire too quickly", "XSS can read localStorage — store tokens in httpOnly cookies which are inaccessible to JavaScript", "localStorage is too slow — use sessionStorage instead", "Tokens should be stored in Redux state only"],
+    correctAnswer: 1,
+    explanation: "Tokens in localStorage are accessible to any JavaScript, including injected XSS scripts. HttpOnly cookies cannot be read by JavaScript and are automatically sent with requests. Pair with SameSite=Strict and Secure flags for CSRF protection.",
+    difficulty: "hard",
+  },
+  {
+    mode: "builder",
+    scenario: "You're designing a microservices architecture. Service A calls Service B with admin privileges. How do you prevent Service Compromise attacks where compromising Service A gives full access to everything?",
+    options: ["Use API keys shared between all services", "Implement mTLS between services, service-specific JWT scopes, and network policies limiting service-to-service communication", "Firewall all services from external access", "Use a single monolithic application instead"],
+    correctAnswer: 1,
+    explanation: "Zero-trust microservices security requires mutual TLS (service identity verification), scoped service tokens (each service only gets permissions for its specific needs), and network segmentation. This limits blast radius if one service is compromised.",
+    difficulty: "hard",
+  },
+  // ====== BUILDER — EXPERT ======
+  {
+    mode: "builder",
+    scenario: "You discover your API is vulnerable to a SSRF (Server-Side Request Forgery) attack. An attacker submits: POST /api/fetch with url='http://169.254.169.254/latest/meta-data/iam/security-credentials/' — what are they trying to access and what is the full impact?",
+    options: ["User profile data from an internal database", "AWS instance metadata service — stealing IAM credentials to pivot to full AWS account takeover", "Internal admin panel — bypassing authentication", "Local files on the server — directory traversal"],
+    correctAnswer: 1,
+    explanation: "SSRF against AWS metadata (169.254.169.254) exposes IAM credentials, giving attackers full AWS API access. Defense: block metadata IPs at network level, validate/allowlist URLs, use IMDSv2 (requires PUT pre-flight request), and apply instance profile policies with minimum permissions.",
+    difficulty: "expert",
+  },
+  // ====== ESCAPE — EASY ======
+  {
+    mode: "escape",
+    scenario: "You're locked in the server room. The keypad requires a 2-digit code. You find a sticky note: 'The code is the ASCII value of the letter A minus 23'. What is the code?",
+    options: ["42", "65", "23", "88"],
+    correctAnswer: 0,
+    explanation: "ASCII value of 'A' is 65. 65 - 23 = 42. ASCII (American Standard Code for Information Interchange) maps characters to numbers. Understanding ASCII is fundamental to understanding encoding, hashing, and many security concepts.",
+    difficulty: "easy",
+  },
+  {
+    mode: "escape",
+    scenario: "The door requires a password that is the ROT13 decode of: 'PHOREFRPHEVGL'. What is the password?",
+    options: ["SECURITY", "CYBERSECURITY", "HACKING", "DEFENSEMODE"],
+    correctAnswer: 1,
+    explanation: "ROT13 shifts each letter by 13 positions. C→P, U→H, O→B, E→R... 'PHOREFRPHEVGL' decodes to 'CYBERSECURITY'. ROT13 is a simple substitution cipher — not secure but commonly seen in CTF challenges. Real encryption requires keys and modern algorithms.",
+    difficulty: "easy",
+  },
+  {
+    mode: "escape",
+    scenario: "You find a QR code that decodes to: 'aGFja2Vycw=='. The door lock accepts only the decoded text. What do you enter?",
+    options: ["aGFja2Vycw==", "hackers", "aGFja2Vycw", "security"],
+    correctAnswer: 1,
+    explanation: "Base64 'aGFja2Vycw==' decodes to 'hackers'. Base64 encoding converts binary data to ASCII text using 64 characters. The '==' padding indicates the original data length. It's used in emails, JWTs, and data URIs — but is encoding, not encryption.",
+    difficulty: "easy",
+  },
+  // ====== ESCAPE — MEDIUM ======
   {
     mode: "escape",
     scenario: "You're locked in the server room. The door code is hidden in the system logs. Log entry: 'AUTH_FAILED user=admin ip=192.168.1.1 attempts=3 | next=base64:NDI=' — decode the clue to escape.",
     options: ["The code is 192", "The code is 42", "The code is admin", "The code is 168"],
     correctAnswer: 1,
-    explanation: "base64:NDI= decodes to '42'. Base64 encoding is used to encode binary data as ASCII text. You can decode it with: atob('NDI=') = '42'. The admin's failed login attempts were a red herring!",
+    explanation: "base64:NDI= decodes to '42'. Base64 encoding is used to encode binary data as ASCII text. You can decode with: atob('NDI=') = '42'. The admin's failed login attempts were a red herring!",
     difficulty: "medium",
   },
+  {
+    mode: "escape",
+    scenario: "The escape hatch opens if you can identify the vulnerability. Code review reveals: query = 'SELECT * FROM users WHERE id = ' + req.params.id. An attacker sends id='1 OR 1=1'. What happens and what's the fix?",
+    options: ["Query fails with syntax error — no fix needed", "SQL Injection returns all users — fix by using parameterized queries: db.query('SELECT * FROM users WHERE id = ?', [id])", "XSS attack — sanitize HTML", "The query is safe because it uses SELECT not DELETE"],
+    correctAnswer: 1,
+    explanation: "String concatenation into SQL creates injection vulnerabilities. '1 OR 1=1' makes the WHERE clause always true, returning all rows. Parameterized queries (prepared statements) treat user input as data, not SQL code — the '?' placeholder prevents injection.",
+    difficulty: "medium",
+  },
+  {
+    mode: "escape",
+    scenario: "A hash is written on the wall: 5f4dcc3b5aa765d61d8327deb882cf99. You need the original value to escape. This is a well-known hash — what is it?",
+    options: ["admin", "letmein", "password", "123456"],
+    correctAnswer: 2,
+    explanation: "This is the MD5 hash of 'password' — one of the most common passwords. MD5 hashes can be looked up in rainbow tables instantly. This is why bcrypt/Argon2 with salting is required — rainbow tables become computationally infeasible.",
+    difficulty: "medium",
+  },
+  // ====== ESCAPE — HARD ======
   {
     mode: "escape",
     scenario: "The firewall logs show traffic blocked from internal network 10.0.0.0/8. An insider threat has hidden a secret message in the subnet mask. What does /8 mean in CIDR notation and what's the hint?",
     options: ["8 ports are open — the code is 8", "8 bits are masked — the first octet is fixed, code is the last number: 255", "8 hosts on the network — the code is 8", "The subnet has 8 routers — code is 8"],
     correctAnswer: 1,
-    explanation: "/8 means the first 8 bits of the IP are the network portion, giving a subnet mask of 255.0.0.0. This means 255 is in the subnet mask — pointing to the code! Understanding CIDR notation is fundamental to network security.",
+    explanation: "/8 means the first 8 bits are the network portion, giving subnet mask 255.0.0.0. This means 255 is in the subnet mask — pointing to the code! Understanding CIDR notation is fundamental to network security.",
     difficulty: "hard",
+  },
+  {
+    mode: "escape",
+    scenario: "You find an encrypted message: U2FsdGVkX1+abc123... and a note saying it uses AES-256 in CBC mode with a weak key derived from MD5('admin'). The key is: 21232f297a57a5a743894a0e4a801fc3. Decrypt the first block to find the code. What is the attack vector here?",
+    options: ["Brute force the AES key", "Weak key derivation — MD5 of common words is pre-computable; 'admin' MD5 is known", "The IV is predictable — attack the CBC initialization vector", "AES-256 cannot be broken — this challenge is unsolvable"],
+    correctAnswer: 1,
+    explanation: "AES-256 itself is unbreakable, but the key was derived from MD5('admin') — a known, pre-computed hash. Key derivation must use slow functions like PBKDF2/Argon2 with a random salt. Never use simple hashes to derive keys from passwords.",
+    difficulty: "hard",
+  },
+  // ====== ESCAPE — EXPERT ======
+  {
+    mode: "escape",
+    scenario: "The final door requires understanding a JWT vulnerability. You have a token: eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ. — the header decodes to {\"alg\":\"none\"}. What attack is possible and how do you fix it?",
+    options: ["JWT is expired — refresh the token", "Algorithm confusion attack — 'none' algorithm skips signature verification, allowing forgery of any payload", "The payload is base64 encoded — this is expected and safe", "Weak secret key — switch to RS256"],
+    correctAnswer: 1,
+    explanation: "The 'none' algorithm attack exploits JWT libraries that accept unsigned tokens. Decoding this token reveals admin claims with NO signature. Fix: explicitly whitelist allowed algorithms (HS256/RS256), never accept 'none', and validate alg header server-side.",
+    difficulty: "expert",
   },
 ];
 
@@ -97,5 +397,5 @@ export async function seedQuestions() {
   }
 
   await db.insert(questionsTable).values(questions);
-  logger.info({ count: questions.length }, "Seeded questions");
+  logger.info({ count: questions.length }, `Seeded ${questions.length} questions`);
 }

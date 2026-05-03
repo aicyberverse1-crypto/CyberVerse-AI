@@ -271,6 +271,7 @@ export interface AiChatResponse {
 
 export type GetQuestionsParams = {
   mode?: GetQuestionsMode;
+  difficulty?: GetQuestionsDifficulty;
   limit?: number;
 };
 
@@ -282,6 +283,16 @@ export const GetQuestionsMode = {
   defense: "defense",
   builder: "builder",
   escape: "escape",
+} as const;
+
+export type GetQuestionsDifficulty =
+  (typeof GetQuestionsDifficulty)[keyof typeof GetQuestionsDifficulty];
+
+export const GetQuestionsDifficulty = {
+  easy: "easy",
+  medium: "medium",
+  hard: "hard",
+  expert: "expert",
 } as const;
 
 export type GetLeaderboardParams = {

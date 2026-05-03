@@ -5,9 +5,11 @@
  * CyberVerse AI - Hacker vs Defender Simulator API
  * OpenAPI spec version: 0.2.0
  */
+import type { GetQuestionsDifficulty } from "./getQuestionsDifficulty";
 import type { GetQuestionsMode } from "./getQuestionsMode";
 
 export type GetQuestionsParams = {
   mode?: GetQuestionsMode;
+  difficulty?: GetQuestionsDifficulty;
   limit?: number;
 };

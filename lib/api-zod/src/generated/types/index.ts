@@ -18,6 +18,7 @@ export * from "./dashboardStats";
 export * from "./errorResponse";
 export * from "./getLeaderboardFilter";
 export * from "./getLeaderboardParams";
+export * from "./getQuestionsDifficulty";
 export * from "./getQuestionsMode";
 export * from "./getQuestionsParams";
 export * from "./healthStatus";

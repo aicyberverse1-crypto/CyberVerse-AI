@@ -1,0 +1,169 @@
+Act as an elite full-stack developer, AI engineer, and product designer.
+
+Your task is to automatically integrate ALL advanced upgrade features into the existing CyberVerse AI project.
+
+IMPORTANT RULES:
+- If a feature already exists → DO NOT overwrite it
+- Instead: enhance, optimize, or extend it
+- Maintain clean architecture and modular code
+- Do not break existing functionality
+- Add comments for every new feature
+
+-----------------------------------
+🧠 STEP 1: AI MEMORY SYSTEM
+-----------------------------------
+Add persistent AI memory:
+- Store user mistakes, weak areas, performance history
+- AI should use memory to:
+  - Give smarter hints
+  - Suggest targeted missions
+  - Adjust explanations
+
+-----------------------------------
+📰 STEP 2: REAL-WORLD CYBER NEWS
+-----------------------------------
+Add a “Cyber News” section:
+- Fetch latest cybersecurity news (API or mock data)
+- AI explains each news in simple terms
+- Show “What you can learn from this”
+
+-----------------------------------
+🕶️ STEP 3: DARK WEB SIMULATION (SAFE)
+-----------------------------------
+Create a simulated dark web interface:
+- Fake marketplace
+- Suspicious emails/messages
+- User must identify scams
+
+Ensure:
+- Educational only
+- No real illegal content
+
+-----------------------------------
+🛠️ STEP 4: MISSION BUILDER
+-----------------------------------
+Allow users to:
+- Create custom missions
+- Add questions and answers
+- Save and share missions
+
+-----------------------------------
+🎥 STEP 5: REPLAY + ANALYSIS SYSTEM
+-----------------------------------
+After each mission:
+- Show user actions step-by-step
+- Highlight mistakes
+- AI gives feedback:
+  - What went wrong
+  - How to improve
+
+-----------------------------------
+🕶️ STEP 6: HACKER AVATAR SYSTEM
+-----------------------------------
+Add:
+- Avatar selection
+- Unlockable skins
+- Custom hacker usernames
+
+-----------------------------------
+🧪 STEP 7: LAB MODE
+-----------------------------------
+Create a practice mode:
+- Unlimited attempts
+- No penalty
+- Topic-based practice
+
+-----------------------------------
+⏱️ STEP 8: SPEED RUN MODE
+-----------------------------------
+Add:
+- Time-based missions
+- Leaderboard based on speed
+
+-----------------------------------
+🤖 STEP 9: AI VS PLAYER MODE
+-----------------------------------
+Create a mode where:
+- AI challenges the player
+- AI tries to trick user with scenarios
+
+-----------------------------------
+📜 STEP 10: CERTIFICATE SYSTEM
+-----------------------------------
+Generate certificates:
+- Based on user achievements
+- Include name, rank, and skills
+
+-----------------------------------
+🧠 STEP 11: BEHAVIOR TRACKING
+-----------------------------------
+Track:
+- Speed
+- Accuracy
+- Mistake patterns
+
+AI should give feedback like:
+“You rushed this decision”
+
+-----------------------------------
+📱 STEP 12: PWA / MOBILE SUPPORT
+-----------------------------------
+Convert app into PWA:
+- Installable on mobile
+- Offline support
+- Responsive design
+
+-----------------------------------
+🥚 STEP 13: EASTER EGGS
+-----------------------------------
+Add hidden features:
+- Secret missions
+- Hidden codes
+- Surprise rewards
+
+-----------------------------------
+🎨 STEP 14: UI INTEGRATION
+-----------------------------------
+Ensure:
+- All new features match hacker-style UI
+- Smooth navigation
+- No broken layouts
+
+-----------------------------------
+⚙️ STEP 15: BACKEND SUPPORT
+-----------------------------------
+Update backend:
+- Add new APIs
+- Extend database tables:
+  - user_memory
+  - custom_missions
+  - replays
+  - avatars
+  - certificates
+
+-----------------------------------
+📊 STEP 16: FINAL TESTING
+-----------------------------------
+- Test all features
+- Fix bugs automatically
+- Optimize performance
+
+-----------------------------------
+📋 STEP 17: FINAL REPORT
+-----------------------------------
+Provide:
+1. Features successfully added
+2. Features enhanced
+3. Any limitations
+4. Final system status
+
+-----------------------------------
+🎯 FINAL GOAL
+-----------------------------------
+Transform CyberVerse AI into:
+- A complete cyber training ecosystem
+- AI-powered personalized learning platform
+- Competitive multiplayer game
+- Visually stunning hacker simulator
+
+Do NOT stop until everything is integrated, tested, and working smoothly.

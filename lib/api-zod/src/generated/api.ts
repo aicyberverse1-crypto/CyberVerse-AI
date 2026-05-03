@@ -116,6 +116,7 @@ export const ClaimDailyBonusResponse = zod.object({
  */
 export const GetQuestionsQueryParams = zod.object({
   mode: zod.enum(["phishing", "defense", "builder", "escape"]).optional(),
+  difficulty: zod.enum(["easy", "medium", "hard", "expert"]).optional(),
   limit: zod.coerce.number().optional(),
 });
 
