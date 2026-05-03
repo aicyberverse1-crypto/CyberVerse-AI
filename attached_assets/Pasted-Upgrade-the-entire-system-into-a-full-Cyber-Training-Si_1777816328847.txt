@@ -1,0 +1,106 @@
+Upgrade the entire system into a full Cyber Training Simulator with AI intelligence, competitive gameplay, and adaptive learning.
+
+IMPORTANT:
+- If any feature already exists, DO NOT duplicate it
+- Instead improve and integrate it
+- REMOVE any Tournament Mode or competition-based weekly system if present
+
+-----------------------------------
+🤖 AI TRAINER SYSTEM
+-----------------------------------
+- Track user mistakes (phishing, password, links)
+- Analyze weak and strong areas
+- Suggest personalized missions
+- Adjust difficulty dynamically
+
+-----------------------------------
+⚔️ AI OPPONENT MODE
+-----------------------------------
+- Create real-time challenges
+- Add timer-based gameplay
+- Score based on speed + accuracy
+- Show "AI Hacker vs User" interface
+
+-----------------------------------
+🎬 STORY MODE
+-----------------------------------
+- Create mission-based progression
+- Add levels:
+  1. Beginner
+  2. Intermediate
+  3. Advanced
+  4. Final Boss
+- Show story dialogues
+
+-----------------------------------
+💻 TERMINAL MODE
+-----------------------------------
+- Add fake command-line interface
+- Commands:
+  - scan network
+  - analyze email
+  - decrypt file
+- Show simulated outputs
+
+-----------------------------------
+🏆 RANK + TITLE SYSTEM
+-----------------------------------
+- Add dynamic titles:
+  - Based on score
+  - Based on streak
+  - Based on skill type
+- Show title in user profile
+
+-----------------------------------
+🔥 STREAK SYSTEM
+-----------------------------------
+- Track daily login
+- Give streak titles:
+  - On Fire
+  - Unstoppable
+
+-----------------------------------
+📊 ADMIN DASHBOARD
+-----------------------------------
+- Login:
+  username: admin
+  password: Pass@1234
+- Features:
+  - View all users
+  - Track performance
+  - Filter by month
+  - Show total users on top
+  - Download report anytime
+
+-----------------------------------
+📄 PDF REPORT
+-----------------------------------
+- Include:
+  - User names
+  - Scores
+  - Rankings
+  - Monthly filter
+- Highlight top users
+
+-----------------------------------
+🎨 UI DESIGN
+-----------------------------------
+- Cyberpunk dark-mode UI
+- Neon glow effects
+- Smooth animations
+- Dashboard-style layout
+
+-----------------------------------
+⚙️ BACKEND
+-----------------------------------
+- Store all user data
+- APIs:
+  - /users
+  - /admin
+  - /ai/trainer
+  - /leaderboard
+
+-----------------------------------
+🎯 FINAL GOAL
+-----------------------------------
+Create a smart, AI-driven cybersecurity training platform that adapts to users and feels like a real hacking simulator.
