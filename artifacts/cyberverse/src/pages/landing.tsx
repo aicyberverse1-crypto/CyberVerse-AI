@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type RefObject } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { getToken } from "@/lib/auth";
@@ -126,10 +126,15 @@ function BootSequence({ onComplete }: { onComplete: () => void }) {
   );
 }
 
+// Konami code Easter egg sequence: ↑↑↓↓←→←→BA
+const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+
 export default function Landing() {
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<"matrix" | "boot" | "title" | "cta">("matrix");
   const [showBoot, setShowBoot] = useState(false);
+  const [easterEgg, setEasterEgg] = useState(false);
+  const konamiProgress = useRef<number>(0);
 
   useEffect(() => {
     if (getToken()) { setLocation("/dashboard"); return; }
@@ -151,9 +156,22 @@ export default function Landing() {
     }, 200);
   }
 
+  // Konami code listener
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Enter" && phase === "cta") handleEnter();
+      // Easter egg: track Konami sequence
+      if (e.key === KONAMI[konamiProgress.current]) {
+        konamiProgress.current += 1;
+        if (konamiProgress.current === KONAMI.length) {
+          konamiProgress.current = 0;
+          setEasterEgg(true);
+          audioEffects.levelUp();
+          setTimeout(() => setEasterEgg(false), 5000);
+        }
+      } else {
+        konamiProgress.current = 0;
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -330,6 +348,32 @@ export default function Landing() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Easter egg overlay — triggered by Konami code ↑↑↓↓←→←→BA */}
+      <AnimatePresence>
+        {easterEgg && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
+          >
+            <div className="bg-black/90 border-2 border-primary rounded-2xl p-10 text-center max-w-sm mx-4 shadow-[0_0_80px_rgba(0,255,136,0.5)]">
+              <div className="text-5xl mb-4">🕶</div>
+              <div className="text-2xl font-black text-primary font-mono tracking-widest mb-2">ACCESS GRANTED</div>
+              <div className="text-sm font-mono text-muted-foreground mb-4">SECRET AGENT MODE UNLOCKED</div>
+              <div className="text-xs font-mono text-primary/70 leading-relaxed">
+                You found the Konami code.<br />
+                The shadows know your name, Agent.<br />
+                <span className="text-yellow-400">+∞ respect</span> added to your profile.
+              </div>
+              <div className="mt-4 text-[10px] font-mono text-muted-foreground/40 tracking-widest">
+                ↑↑↓↓←→←→BA — CLASSIFIED
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Bottom bar */}
       <div className="absolute bottom-6 left-0 right-0 flex justify-center">

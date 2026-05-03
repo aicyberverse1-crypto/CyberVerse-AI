@@ -1,0 +1,36 @@
+{
+  "name": "CyberVerse AI",
+  "short_name": "CyberVerse",
+  "description": "Train Like a Hacker. Think Like AI. Cybersecurity simulation platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020b12",
+  "theme_color": "#00ff88",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "games", "security"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "View your operator dashboard"
+    },
+    {
+      "name": "AI Missions",
+      "url": "/missions",
+      "description": "Start an AI-generated mission"
+    },
+    {
+      "name": "Leaderboard",
+      "url": "/leaderboard",
+      "description": "Check global rankings"
+    }
+  ]
+}

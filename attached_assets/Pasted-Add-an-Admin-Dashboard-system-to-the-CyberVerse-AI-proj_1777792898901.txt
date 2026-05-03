@@ -1,0 +1,90 @@
+Add an Admin Dashboard system to the CyberVerse AI project.
+
+IMPORTANT:
+- Do NOT break existing login system
+- Extend it to support admin access
+
+-----------------------------------
+🔐 ADMIN AUTHENTICATION
+-----------------------------------
+Add a special admin login:
+
+Username: admin
+Password: Pass@1234
+
+If these credentials are entered:
+- Redirect to Admin Dashboard
+- Do NOT treat as normal user
+
+-----------------------------------
+🛡️ ACCESS CONTROL
+-----------------------------------
+- Protect admin routes
+- Only admin can access dashboard
+- Normal users must NOT access it
+
+-----------------------------------
+📊 ADMIN DASHBOARD UI
+-----------------------------------
+Create a new page:
+- Clean dashboard layout
+- Table view for users
+
+-----------------------------------
+👥 USER MANAGEMENT
+-----------------------------------
+Display all users with:
+- Username
+- Rank
+- Points
+- Accuracy
+- Streak
+
+-----------------------------------
+🗑️ DELETE USER FEATURE
+-----------------------------------
+- Add delete button for each user
+- Remove user from database
+- Update leaderboard automatically
+
+-----------------------------------
+📈 PERFORMANCE TRACKING
+-----------------------------------
+Show:
+- Top users
+- Lowest performers
+- Average score
+
+-----------------------------------
+🔍 SEARCH & FILTER
+-----------------------------------
+- Search by username
+- Filter by rank or score
+
+-----------------------------------
+🤖 AI USAGE TRACKING
+-----------------------------------
+Show:
+- Hint points used
+- AI interactions per user
+
+-----------------------------------
+⚙️ BACKEND CHANGES
+-----------------------------------
+- Add role field in database (user/admin)
+- Create APIs:
+  - Get all users
+  - Delete user
+  - Get analytics
+
+-----------------------------------
+🎨 UI STYLE
+-----------------------------------
+- Match hacker theme
+- Dark mode
+- Clean table design
+
+-----------------------------------
+🎯 FINAL GOAL
+-----------------------------------
+Create a fully functional admin control panel that allows monitoring and managing all users safely and efficiently.

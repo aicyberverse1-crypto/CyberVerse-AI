@@ -2,7 +2,7 @@
 
 ## Overview
 
-Full-stack cybersecurity simulation platform. Players train through 6 game modes, earn XP/levels/hint points, compete on a global leaderboard, unlock skills in a branching skill tree, complete AI-generated missions, and battle AI opponents in multiplayer mode.
+Full-stack cybersecurity simulation platform. Players train through 6+ game modes, earn XP/levels/hint points, compete on a global leaderboard, unlock skills in a branching skill tree, complete AI-generated missions, battle AI opponents in multiplayer mode, explore cyber threat intelligence, practice in lab mode, and earn achievement certificates.
 
 ## Stack
 
@@ -15,22 +15,31 @@ Full-stack cybersecurity simulation platform. Players train through 6 game modes
 - **Database**: PostgreSQL + Drizzle ORM
 - **Auth**: JWT (bcryptjs + jsonwebtoken), SESSION_SECRET env var
 - **AI**: OpenAI via Replit AI integration (gpt-4o-mini), AI hint + AI chat + AI mission generation routes
+- **AI Memory**: Hints now include user's recent performance history (weak area detection, experience level)
+- **Rate Limiting**: express-rate-limit (auth: 15/min, AI: 30/min)
+- **PWA**: manifest.json + all meta tags, installable on mobile
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec → React Query hooks + Zod schemas)
 - **Build**: esbuild (CJS bundle)
 
 ## Key Pages
 
+- `/` — Cinematic landing (matrix rain, boot sequence, glitch title, easter egg)
 - `/login` — JWT auth login
 - `/register` — 2-step new operator registration (credentials + hacker type selection)
-- `/dashboard` — XP/level/rank stats, daily bonus claim, streak display, mode select, risk meter, recent activity
+- `/dashboard` — XP/level/rank stats, daily bonus claim, streak display, recharts (radar/bar/line), Why This Matters
 - `/phishing` — Phishing Detective quiz with AI hints (hint cost display, glitch/flash effects)
 - `/defense` — Attack Defense (timed quiz, audio timer alerts)
 - `/builder` — Secure Builder (password strength + 2FA simulator)
 - `/escape` — Escape Room (timed cryptographic puzzles, multi-level hints)
+- `/lab` — Cyber Lab practice mode (no timer, no penalty, instant explanations)
 - `/skill-tree` — Skill tree with Defender/Attacker paths, skill unlock with skill points
 - `/missions` — AI-generated missions tailored to hacker type and performance
 - `/multiplayer` — Challenge AI opponents of varying difficulty across all modes
+- `/dark-web` — Dark Web Intelligence Simulator (6 threat categories, investigate/neutralize)
+- `/news` — Cyber Threat Intelligence Feed (6 real-world threats, AI explanation, defensive tips)
+- `/profile` — Operator Profile (12 hacker avatars, performance breakdown, AI memory weak areas)
+- `/certificate` — Achievement Certificate (SVG-quality cert, 12 achievement badges, print/share)
 - `/ai-assistant` — AI chat assistant (CyberGuard AI)
 - `/leaderboard` — Global rankings with daily/weekly/all-time filters, rank badges, Top Hacker crown
 
@@ -41,10 +50,11 @@ Full-stack cybersecurity simulation platform. Players train through 6 game modes
 - Hint costs per difficulty: Easy=10 HP, Medium=15 HP, Hard=25 HP, Expert=40 HP
 - Earn hint points by submitting correct answers and leveling up
 - Daily bonus claims add hint points (streak system multiplies rewards)
+- **AI Memory**: Hints now include performance analysis (weak areas flagged if <65% accuracy per mode)
 
 ### Rank Tier System
 - Bronze (0+ total score), Silver (500+), Gold (1500+), Platinum (3000+), Diamond (6000+), Elite Hacker (10000+)
-- Displayed in navbar, sidebar, and leaderboard
+- Displayed in navbar, sidebar, leaderboard, and on Certificate page
 
 ### Skill Tree
 - Two paths: Defender (Blue Team) and Attacker (Red Team)
@@ -70,6 +80,18 @@ Full-stack cybersecurity simulation platform. Players train through 6 game modes
 - Web Audio API synthetic sounds (useAudio.ts hook)
 - Events: success, error, levelUp, victory, hint, alert, timer, typing
 
+### Easter Egg
+- Konami code (↑↑↓↓←→←→BA) on landing page triggers secret agent overlay
+
+### PWA Support
+- manifest.json in public/
+- theme-color, og:tags, apple-mobile-web-app meta tags in index.html
+- Installable from mobile browsers
+
+### Rate Limiting
+- Auth endpoints: max 15 requests/minute per IP
+- AI endpoints: max 30 requests/minute per IP
+
 ## Key API Routes
 
 - `POST /api/auth/register` — creates user with `hackerType`, starts with 500 hintPoints
@@ -84,12 +106,15 @@ Full-stack cybersecurity simulation platform. Players train through 6 game modes
 - `POST /api/score` — submit score with isCorrect + responseTimeMs
 - `GET /api/leaderboard?filter=daily|weekly|all-time&limit=N`
 - `GET /api/stats/dashboard` — full dashboard stats
-- `POST /api/ai/hint` — deducts hint points, returns AI hint
+- `POST /api/ai/hint` — deducts hint points, returns AI hint (personalized with memory)
 - `POST /api/ai/chat` — free-form AI chat
+- `GET /api/questions?mode=X&difficulty=Y` — filtered questions
 
 ## DB Schema Key Fields
 
-Users table additions: `hintPoints`, `hackerType`, `skillPoints`, `unlockedSkills`, `rankTier`, `accuracyRate`, `totalAnswers`, `correctAnswers`, `averageResponseTime`, `streakDays`, `lastClaimedAt`, `lastLoginAt`, `dailyScore`, `lastDailyReset`, `isTopHacker`
+Users table: `hintPoints`, `hackerType`, `skillPoints`, `unlockedSkills`, `rankTier`, `accuracyRate`, `totalAnswers`, `correctAnswers`, `averageResponseTime`, `streakDays`, `lastClaimedAt`, `lastLoginAt`, `dailyScore`, `lastDailyReset`, `isTopHacker`
+
+Questions table: `mode`, `difficulty`, `scenario`, `options`, `correctAnswer`, `explanation`
 
 ## Architecture Notes
 
@@ -98,3 +123,5 @@ Users table additions: `hintPoints`, `hackerType`, `skillPoints`, `unlockedSkill
 - Generated schemas in `lib/api-client-react/src/generated/api.schemas.ts`
 - Run codegen: `pnpm --filter @workspace/api-spec run codegen`
 - User profile helpers: `artifacts/api-server/src/lib/userProfile.ts` (serializeUser, getRankTier, HINT_COSTS)
+- Rate limiting: `artifacts/api-server/src/app.ts` (express-rate-limit on /api/auth and /api/ai)
+- Avatar selection stored in localStorage key `cv_avatar`

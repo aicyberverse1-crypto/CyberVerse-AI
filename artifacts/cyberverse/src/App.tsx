@@ -17,6 +17,10 @@ import SkillTree from "@/pages/skill-tree";
 import Missions from "@/pages/missions";
 import Multiplayer from "@/pages/multiplayer";
 import DarkWeb from "@/pages/dark-web";
+import News from "@/pages/news";
+import Certificate from "@/pages/certificate";
+import Lab from "@/pages/lab";
+import Profile from "@/pages/profile";
 import AppLayout from "@/components/layout/AppLayout";
 import { useEffect } from "react";
 import { getToken } from "@/lib/auth";
@@ -58,6 +62,10 @@ function Router() {
       <Route path="/missions" component={() => <ProtectedRoute component={Missions} />} />
       <Route path="/multiplayer" component={() => <ProtectedRoute component={Multiplayer} />} />
       <Route path="/dark-web" component={() => <ProtectedRoute component={DarkWeb} />} />
+      <Route path="/news" component={() => <ProtectedRoute component={News} />} />
+      <Route path="/certificate" component={() => <ProtectedRoute component={Certificate} />} />
+      <Route path="/lab" component={() => <ProtectedRoute component={Lab} />} />
+      <Route path="/profile" component={() => <ProtectedRoute component={Profile} />} />
 
       <Route component={NotFound} />
     </Switch>

@@ -3,7 +3,8 @@ import { ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard, Mail, Shield, Lock, Bot, Trophy, LogOut, Activity,
-  TreePine, Swords, Users, Lightbulb, Globe, Zap
+  TreePine, Swords, Users, Lightbulb, Globe, Zap, Newspaper, Award,
+  FlaskConical, User
 } from "lucide-react";
 import { useGetUser } from "@workspace/api-client-react";
 import { removeToken } from "@/lib/auth";
@@ -11,18 +12,30 @@ import AiChatWidget from "@/components/AiChatWidget";
 import { Badge } from "@/components/ui/badge";
 
 const NAV_ITEMS = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/phishing", label: "Phishing Detective", icon: Mail },
-  { path: "/defense", label: "Attack Defense", icon: Shield },
-  { path: "/builder", label: "Secure Builder", icon: Lock },
-  { path: "/escape", label: "Escape Room", icon: Activity },
-  { path: "/multiplayer", label: "Multiplayer", icon: Users },
-  { path: "/missions", label: "AI Missions", icon: Swords },
-  { path: "/dark-web", label: "Dark Web Intel", icon: Globe },
-  { path: "/skill-tree", label: "Skill Tree", icon: TreePine },
-  { path: "/ai-assistant", label: "AI Assistant", icon: Bot },
-  { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, group: "main" },
+  { path: "/phishing", label: "Phishing Detective", icon: Mail, group: "play" },
+  { path: "/defense", label: "Attack Defense", icon: Shield, group: "play" },
+  { path: "/builder", label: "Secure Builder", icon: Lock, group: "play" },
+  { path: "/escape", label: "Escape Room", icon: Activity, group: "play" },
+  { path: "/lab", label: "Cyber Lab", icon: FlaskConical, group: "play", badge: "NEW" },
+  { path: "/multiplayer", label: "Multiplayer", icon: Users, group: "play" },
+  { path: "/missions", label: "AI Missions", icon: Swords, group: "play" },
+  { path: "/dark-web", label: "Dark Web Intel", icon: Globe, group: "intel" },
+  { path: "/news", label: "Threat Intel Feed", icon: Newspaper, group: "intel", badge: "LIVE" },
+  { path: "/skill-tree", label: "Skill Tree", icon: TreePine, group: "progress" },
+  { path: "/leaderboard", label: "Leaderboard", icon: Trophy, group: "progress" },
+  { path: "/certificate", label: "Certificate", icon: Award, group: "progress" },
+  { path: "/profile", label: "My Profile", icon: User, group: "progress" },
+  { path: "/ai-assistant", label: "AI Assistant", icon: Bot, group: "tools" },
 ];
+
+const GROUP_LABELS: Record<string, string> = {
+  main: "OVERVIEW",
+  play: "TRAINING",
+  intel: "INTELLIGENCE",
+  progress: "PROGRESS",
+  tools: "TOOLS",
+};
 
 const RANK_COLORS: Record<string, string> = {
   "Bronze": "text-amber-600",
@@ -31,6 +44,11 @@ const RANK_COLORS: Record<string, string> = {
   "Platinum": "text-cyan-400",
   "Diamond": "text-blue-400",
   "Elite Hacker": "text-purple-400",
+};
+
+const BADGE_COLORS: Record<string, string> = {
+  "NEW": "bg-primary/10 text-primary border-primary/20",
+  "LIVE": "bg-red-400/10 text-red-400 border-red-400/20",
 };
 
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -44,6 +62,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const xpPercent = user ? (user.xp % 100) : 0;
   const rankColor = RANK_COLORS[user?.rankTier ?? "Bronze"] ?? "text-amber-600";
+
+  // Group nav items for sidebar sections
+  const groups = ["main", "play", "intel", "progress", "tools"];
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -93,28 +114,42 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const active = location === item.path;
+        <nav className="flex-1 p-3 overflow-y-auto space-y-3">
+          {groups.map(group => {
+            const items = NAV_ITEMS.filter(i => i.group === group);
             return (
-              <Link key={item.path} href={item.path}>
-                <motion.div
-                  whileHover={{ x: 3 }}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer text-xs transition-colors ${
-                    active
-                      ? "bg-primary/15 text-primary border border-primary/30"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span>{item.label}</span>
-                  {item.path === "/dark-web" && (
-                    <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-mono">NEW</span>
-                  )}
-                  {active && <motion.div layoutId="active-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
-                </motion.div>
-              </Link>
+              <div key={group}>
+                <div className="px-2 mb-1 text-[9px] font-bold tracking-widest text-muted-foreground/50 uppercase">
+                  {GROUP_LABELS[group]}
+                </div>
+                <div className="space-y-0.5">
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    const active = location === item.path;
+                    return (
+                      <Link key={item.path} href={item.path}>
+                        <motion.div
+                          whileHover={{ x: 3 }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer text-xs transition-colors ${
+                            active
+                              ? "bg-primary/15 text-primary border border-primary/30"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5 shrink-0" />
+                          <span className="flex-1">{item.label}</span>
+                          {item.badge && (
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded border font-mono ${BADGE_COLORS[item.badge]}`}>
+                              {item.badge}
+                            </span>
+                          )}
+                          {active && <motion.div layoutId="active-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                        </motion.div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
@@ -136,7 +171,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <header className="h-12 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6 shrink-0">
           <div className="text-[10px] font-mono text-muted-foreground flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            SOC TERMINAL v2.5 — {location.replace("/", "").replace(/-/g, " ").toUpperCase() || "DASHBOARD"}
+            SOC TERMINAL v3.0 — {location.replace("/", "").replace(/-/g, " ").toUpperCase() || "DASHBOARD"}
           </div>
           {user && (
             <div className="flex items-center gap-4">
