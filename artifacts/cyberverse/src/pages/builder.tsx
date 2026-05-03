@@ -160,14 +160,14 @@ export default function Builder() {
                 />
               </div>
               <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                {[
-                  ["8+ chars", pw => pw.length >= 8],
-                  ["12+ chars", pw => pw.length >= 12],
-                  ["Uppercase", pw => /[A-Z]/.test(pw)],
-                  ["Numbers", pw => /[0-9]/.test(pw)],
-                  ["Lowercase", pw => /[a-z]/.test(pw)],
-                  ["Symbols", pw => /[^A-Za-z0-9]/.test(pw)],
-                ].map(([label, check]) => (
+                {([
+                  ["8+ chars", (pw: string) => pw.length >= 8],
+                  ["12+ chars", (pw: string) => pw.length >= 12],
+                  ["Uppercase", (pw: string) => /[A-Z]/.test(pw)],
+                  ["Numbers", (pw: string) => /[0-9]/.test(pw)],
+                  ["Lowercase", (pw: string) => /[a-z]/.test(pw)],
+                  ["Symbols", (pw: string) => /[^A-Za-z0-9]/.test(pw)],
+                ] as [string, (pw: string) => boolean][]).map(([label, check]) => (
                   <div key={label as string} className={`flex items-center gap-1 ${(check as (pw: string) => boolean)(password) ? "text-primary" : "text-muted-foreground"}`}>
                     {(check as (pw: string) => boolean)(password)
                       ? <CheckCircle className="w-3 h-3" />

@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard, Mail, Shield, Lock, Bot, Trophy, LogOut, Activity,
-  TreePine, Swords, Users, Lightbulb
+  TreePine, Swords, Users, Lightbulb, Globe, Zap
 } from "lucide-react";
 import { useGetUser } from "@workspace/api-client-react";
 import { removeToken } from "@/lib/auth";
@@ -17,7 +17,8 @@ const NAV_ITEMS = [
   { path: "/builder", label: "Secure Builder", icon: Lock },
   { path: "/escape", label: "Escape Room", icon: Activity },
   { path: "/multiplayer", label: "Multiplayer", icon: Users },
-  { path: "/missions", label: "Missions", icon: Swords },
+  { path: "/missions", label: "AI Missions", icon: Swords },
+  { path: "/dark-web", label: "Dark Web Intel", icon: Globe },
   { path: "/skill-tree", label: "Skill Tree", icon: TreePine },
   { path: "/ai-assistant", label: "AI Assistant", icon: Bot },
   { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
@@ -38,7 +39,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   function handleLogout() {
     removeToken();
-    setLocation("/login");
+    setLocation("/");
   }
 
   const xpPercent = user ? (user.xp % 100) : 0;
@@ -48,14 +49,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-background text-foreground">
       {/* Sidebar */}
       <aside className="w-60 flex flex-col bg-card border-r border-border shrink-0">
+        {/* Logo */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center">
+            <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center ring-1 ring-primary/30">
               <Shield className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <div className="text-xs font-bold text-primary tracking-widest uppercase">CyberVerse</div>
-              <div className="text-[10px] text-muted-foreground">AI Simulator</div>
+              <div className="text-xs font-black text-primary tracking-widest uppercase font-mono">CyberVerse</div>
+              <div className="text-[9px] text-muted-foreground font-mono">Train Like a Hacker. Think Like AI.</div>
             </div>
           </div>
         </div>
@@ -107,6 +109,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
                   <span>{item.label}</span>
+                  {item.path === "/dark-web" && (
+                    <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-mono">NEW</span>
+                  )}
                   {active && <motion.div layoutId="active-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
                 </motion.div>
               </Link>
@@ -129,8 +134,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Navbar */}
         <header className="h-12 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6 shrink-0">
-          <div className="text-[10px] font-mono text-muted-foreground">
-            SOC TERMINAL v2.5 — {location.replace("/", "").replace("-", " ").toUpperCase() || "DASHBOARD"}
+          <div className="text-[10px] font-mono text-muted-foreground flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            SOC TERMINAL v2.5 — {location.replace("/", "").replace(/-/g, " ").toUpperCase() || "DASHBOARD"}
           </div>
           {user && (
             <div className="flex items-center gap-4">
@@ -148,7 +154,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </Badge>
               )}
               <div className="flex items-center gap-2 px-2 py-1 bg-muted/50 rounded border border-border">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <Zap className="w-3 h-3 text-primary" />
                 <span className="text-xs font-mono">{user.username}</span>
                 <span className="text-[10px] text-muted-foreground">Lv{user.level}</span>
               </div>

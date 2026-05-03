@@ -1,0 +1,159 @@
+Perform a complete audit of the CyberVerse AI project and verify whether ALL features are correctly implemented, functional, and optimized.
+
+IMPORTANT:
+- Do NOT modify code unless fixing errors
+- Focus on checking, testing, and reporting
+- If a feature exists → mark as ✅ COMPLETE
+- If partially implemented → mark as ⚠️ PARTIAL
+- If missing → mark as ❌ MISSING
+
+-----------------------------------
+🧠 CORE SYSTEM CHECK
+-----------------------------------
+Verify:
+- Project runs without errors
+- Frontend and backend are connected
+- API calls work correctly
+- Database is connected and storing data
+
+-----------------------------------
+🔐 AUTH SYSTEM
+-----------------------------------
+Check:
+- User registration works
+- Login system works
+- JWT authentication works
+- New users receive:
+  - 500 hint points
+  - Default rank (Bronze)
+  - Streak = 0
+
+-----------------------------------
+🤖 AI SYSTEM
+-----------------------------------
+Check:
+- AI chatbot responds correctly
+- Hint point deduction works:
+  - Small (-10)
+  - Medium (-20)
+  - Full (-50)
+
+- AI adapts to user performance
+- AI generates custom missions
+
+-----------------------------------
+🎮 GAMEPLAY SYSTEM
+-----------------------------------
+Check:
+- Each mission contains 5–8 questions
+- Questions load correctly
+- Answers are validated
+- Score updates properly
+
+-----------------------------------
+🧠 ADAPTIVE DIFFICULTY
+-----------------------------------
+Check:
+- Difficulty changes based on performance
+- Harder questions appear for better players
+
+-----------------------------------
+🌳 SKILL TREE
+-----------------------------------
+Check:
+- Defender and Attacker paths exist
+- Skills unlock with XP
+- Skills affect gameplay
+
+-----------------------------------
+🏆 RANK SYSTEM
+-----------------------------------
+Check:
+- Rank progression works
+- Ranks:
+  Bronze → Silver → Gold → Platinum → Elite Hacker
+
+-----------------------------------
+🏅 LEADERBOARD
+-----------------------------------
+Check:
+- Leaderboard displays users
+- Scores update correctly
+- “Top Hacker of the Day” exists
+
+-----------------------------------
+🎁 REWARD SYSTEM
+-----------------------------------
+Check:
+- Daily bonus points
+- Streak rewards increase
+- XP rewards applied
+
+-----------------------------------
+🔥 MULTIPLAYER
+-----------------------------------
+Check:
+- Multiplayer or challenge system works
+- Score comparison works
+
+-----------------------------------
+🎬 STORY MODE
+-----------------------------------
+Check:
+- Campaign exists
+- Missions unlock progressively
+- Story elements present
+
+-----------------------------------
+🎨 UI / UX
+-----------------------------------
+Check:
+- Hacker-style UI present
+- Animations working
+- Responsive design
+- No broken layouts
+
+-----------------------------------
+📊 DASHBOARD
+-----------------------------------
+Check:
+- Performance stats visible
+- Accuracy tracking works
+- Weak areas identified
+
+-----------------------------------
+⚡ PERFORMANCE
+-----------------------------------
+Check:
+- No lag or crashes
+- Fast loading times
+- API optimized
+
+-----------------------------------
+🛡️ SECURITY CHECK
+-----------------------------------
+Check:
+- Input validation
+- No exposed sensitive data
+- API protection (rate limiting if present)
+
+-----------------------------------
+📋 FINAL REPORT FORMAT
+-----------------------------------
+Generate a structured report:
+
+1. Completed Features (✅)
+2. Partially Completed (⚠️)
+3. Missing Features (❌)
+4. Bugs / Issues Found
+5. Optimization Suggestions
+6. Final Score out of 100
+7. “Competition Readiness” (Low / Medium / High)
+
+-----------------------------------
+🎯 GOAL
+-----------------------------------
+Act like a strict judge and ensure this project is:
+- Fully functional
+- Bug-free
+- Competition-ready

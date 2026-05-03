@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { audioEffects } from "@/hooks/useAudio";
 import { useQueryClient } from "@tanstack/react-query";
 import type { MultiplayerResult } from "@workspace/api-client-react";
+import { MultiplayerChallengeBodyOpponentDifficulty } from "@workspace/api-client-react";
 
 const MODES = [
   { id: "phishing", label: "Phishing Detective" },
@@ -29,7 +30,7 @@ export default function Multiplayer() {
   const queryClient = useQueryClient();
   const { data: user } = useGetUser();
   const [mode, setMode] = useState("phishing");
-  const [difficulty, setDifficulty] = useState("medium");
+  const [difficulty, setDifficulty] = useState<MultiplayerChallengeBodyOpponentDifficulty>(MultiplayerChallengeBodyOpponentDifficulty.medium);
   const [result, setResult] = useState<MultiplayerResult | null>(null);
   const [fighting, setFighting] = useState(false);
 

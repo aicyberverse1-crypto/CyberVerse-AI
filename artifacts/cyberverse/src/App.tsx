@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
@@ -15,27 +16,26 @@ import Leaderboard from "@/pages/leaderboard";
 import SkillTree from "@/pages/skill-tree";
 import Missions from "@/pages/missions";
 import Multiplayer from "@/pages/multiplayer";
+import DarkWeb from "@/pages/dark-web";
 import AppLayout from "@/components/layout/AppLayout";
 import { useEffect } from "react";
 import { getToken } from "@/lib/auth";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ component: Component, ...rest }: any) {
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const [location, setLocation] = useLocation();
   const token = getToken();
 
   useEffect(() => {
-    if (!token && location !== "/login" && location !== "/register") {
-      setLocation("/login");
-    }
-  }, [token, location, setLocation]);
+    if (!token) setLocation("/");
+  }, [token]);
 
   if (!token) return null;
 
   return (
     <AppLayout>
-      <Component {...rest} />
+      <Component />
     </AppLayout>
   );
 }
@@ -43,13 +43,7 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => {
-        const [_, setLocation] = useLocation();
-        useEffect(() => {
-          setLocation(getToken() ? "/dashboard" : "/login");
-        }, []);
-        return null;
-      }} />
+      <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
 
@@ -63,6 +57,7 @@ function Router() {
       <Route path="/skill-tree" component={() => <ProtectedRoute component={SkillTree} />} />
       <Route path="/missions" component={() => <ProtectedRoute component={Missions} />} />
       <Route path="/multiplayer" component={() => <ProtectedRoute component={Multiplayer} />} />
+      <Route path="/dark-web" component={() => <ProtectedRoute component={DarkWeb} />} />
 
       <Route component={NotFound} />
     </Switch>

@@ -1,11 +1,20 @@
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetDashboardStats, useGetUser, useClaimDailyBonus } from "@workspace/api-client-react";
+import {
+  useGetDashboardStats, useGetUser, useClaimDailyBonus
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Shield, Lock, Activity, Trophy, Bot, ChevronRight, Zap, Target, TrendingUp, Lightbulb, Gift, Flame, Users, Swords } from "lucide-react";
+import {
+  Mail, Shield, Lock, Activity, Trophy, Bot, ChevronRight,
+  Zap, Target, TrendingUp, Lightbulb, Gift, Flame, Users, Swords, Globe
+} from "lucide-react";
+import {
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid
+} from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { audioEffects } from "@/hooks/useAudio";
@@ -17,6 +26,7 @@ const MODES = [
   { path: "/escape", label: "Escape Room", icon: Activity, desc: "Solve cryptographic puzzles to escape", color: "text-purple-400", bg: "bg-purple-400/10 border-purple-400/30" },
   { path: "/multiplayer", label: "Multiplayer", icon: Users, desc: "Challenge AI opponents in cyber battles", color: "text-orange-400", bg: "bg-orange-400/10 border-orange-400/30" },
   { path: "/missions", label: "AI Missions", icon: Swords, desc: "Personalized AI-generated challenges", color: "text-red-400", bg: "bg-red-400/10 border-red-400/30" },
+  { path: "/dark-web", label: "Dark Web Intel", icon: Globe, desc: "Investigate dark web threat marketplace", color: "text-primary", bg: "bg-primary/10 border-primary/30" },
 ];
 
 const RANK_COLORS: Record<string, string> = {
@@ -37,11 +47,32 @@ const RANK_THRESHOLDS = [
   { rank: "Elite Hacker", min: 10000, next: 10000 },
 ];
 
+const CYBER_STATS = [
+  { stat: "$10.5T", label: "Global cybercrime cost", sub: "by 2025 annually" },
+  { stat: "94%", label: "Breaches start with phishing", sub: "make phishing training #1 priority" },
+  { stat: "287 days", label: "Avg time to detect a breach", sub: "CyberVerse cuts that with AI" },
+  { stat: "3.5M", label: "Unfilled cybersecurity jobs", sub: "worldwide by 2025" },
+];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border rounded-lg px-3 py-2 text-xs font-mono shadow-lg">
+        <p className="text-muted-foreground mb-1">{label}</p>
+        {payload.map((p: any) => (
+          <p key={p.name} style={{ color: p.color }}>{p.name}: {p.value}</p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 function RiskMeter({ score }: { score: number }) {
   const maxScore = 1000;
   const percent = Math.min((score / maxScore) * 100, 100);
   const riskLevel = percent < 20 ? "CRITICAL" : percent < 50 ? "HIGH" : percent < 75 ? "MEDIUM" : "LOW";
-  const riskColor = percent < 20 ? "#ef4444" : percent < 50 ? "#f97316" : percent < 75 ? "#eab308" : "#22c55e";
+  const riskColor = percent < 20 ? "#ef4444" : percent < 50 ? "#f97316" : percent < 75 ? "#eab308" : "#00ff88";
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const strokeDash = (percent / 100) * circumference;
@@ -61,7 +92,7 @@ function RiskMeter({ score }: { score: number }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-lg font-bold" style={{ color: riskColor }}>{riskLevel}</span>
+          <span className="text-lg font-bold font-mono" style={{ color: riskColor }}>{riskLevel}</span>
           <span className="text-xs text-muted-foreground">RISK</span>
         </div>
       </div>
@@ -79,19 +110,35 @@ export default function Dashboard() {
   const [dailyClaimed, setDailyClaimed] = useState(false);
 
   const xpPercent = user ? (user.xp % 100) : 0;
-
   const rankTier = stats?.rankTier ?? "Bronze";
-  const rankThreshold = RANK_THRESHOLDS.find((r) => r.rank === rankTier);
+  const rankThreshold = RANK_THRESHOLDS.find(r => r.rank === rankTier);
   const rankProgress = rankThreshold && rankThreshold.next > rankThreshold.min
     ? ((stats?.totalScore ?? 0) - rankThreshold.min) / (rankThreshold.next - rankThreshold.min) * 100
     : 100;
 
-  const modeScores = [
-    { label: "Phishing", score: stats?.phishingScore ?? 0 },
-    { label: "Defense", score: stats?.defenseScore ?? 0 },
-    { label: "Builder", score: stats?.builderScore ?? 0 },
-    { label: "Escape", score: stats?.escapeScore ?? 0 },
+  // Radar data for performance breakdown
+  const radarData = [
+    { subject: "Phishing", score: Math.min((stats?.phishingScore ?? 0) / 5, 100), fullMark: 100 },
+    { subject: "Defense", score: Math.min((stats?.defenseScore ?? 0) / 5, 100), fullMark: 100 },
+    { subject: "Builder", score: Math.min((stats?.builderScore ?? 0) / 2, 100), fullMark: 100 },
+    { subject: "Escape", score: Math.min((stats?.escapeScore ?? 0) / 5, 100), fullMark: 100 },
+    { subject: "Overall", score: Math.min((stats?.accuracyRate ?? 0), 100), fullMark: 100 },
   ];
+
+  // Bar data for mode scores
+  const barData = [
+    { name: "Phishing", score: stats?.phishingScore ?? 0, fill: "#eab308" },
+    { name: "Defense", score: stats?.defenseScore ?? 0, fill: "#60a5fa" },
+    { name: "Builder", score: stats?.builderScore ?? 0, fill: "#00ff88" },
+    { name: "Escape", score: stats?.escapeScore ?? 0, fill: "#a855f7" },
+  ];
+
+  // Activity line chart data
+  const activityData = (stats?.recentActivity ?? []).slice(0, 8).reverse().map((a, i) => ({
+    name: `#${i + 1}`,
+    score: a.score,
+    xp: a.xpEarned,
+  }));
 
   function handleDailyClaim() {
     audioEffects.alert();
@@ -110,7 +157,6 @@ export default function Dashboard() {
     });
   }
 
-  const canClaim = !dailyClaimed && user && !user.lastClaimedAt;
   const rankColorClass = RANK_COLORS[rankTier] ?? "text-amber-600 border-amber-600/30";
 
   return (
@@ -123,7 +169,7 @@ export default function Dashboard() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">SOC Dashboard — Mission Control Active</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {user?.isTopHacker && (
             <Badge className="bg-yellow-400/20 border-yellow-400/40 text-yellow-400">👑 Top Hacker of the Day</Badge>
           )}
@@ -148,12 +194,12 @@ export default function Dashboard() {
             </div>
             <Button
               onClick={handleDailyClaim}
-              disabled={claimDaily.isPending || (!canClaim && !!user?.lastClaimedAt)}
+              disabled={claimDaily.isPending || !!user?.lastClaimedAt}
               size="sm"
               className="gap-1.5 bg-yellow-400 text-black hover:bg-yellow-400/90 text-xs font-bold"
             >
               <Gift className="w-3.5 h-3.5" />
-              {user?.lastClaimedAt ? "Claimed" : "Claim"}
+              {user?.lastClaimedAt ? "Claimed ✓" : "Claim Now"}
             </Button>
           </CardContent>
         </Card>
@@ -183,7 +229,7 @@ export default function Dashboard() {
           { label: "Total Score", value: stats?.totalScore ?? 0, icon: Target, color: "text-primary" },
           { label: "Hint Points", value: stats?.hintPoints ?? 0, icon: Lightbulb, color: "text-yellow-400" },
           { label: "Games Played", value: stats?.gamesPlayed ?? 0, icon: Activity, color: "text-blue-400" },
-          { label: "Accuracy", value: `${(stats?.accuracyRate ?? 0).toFixed(0)}%`, icon: TrendingUp, color: "text-primary" },
+          { label: "Accuracy Rate", value: `${(stats?.accuracyRate ?? 0).toFixed(0)}%`, icon: TrendingUp, color: "text-primary" },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
             <Card className="bg-card border-border hover:border-primary/30 transition-colors">
@@ -209,7 +255,7 @@ export default function Dashboard() {
                 key={mode.path}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.07 }}
+                transition={{ delay: i * 0.05 }}
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setLocation(mode.path)}
                 className={`cursor-pointer p-4 rounded-xl border ${mode.bg} hover:shadow-lg transition-all`}
@@ -218,7 +264,7 @@ export default function Dashboard() {
                   <mode.icon className={`w-5 h-5 ${mode.color} mt-0.5 shrink-0`} />
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-semibold ${mode.color}`}>{mode.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{mode.desc}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{mode.desc}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                 </div>
@@ -229,7 +275,6 @@ export default function Dashboard() {
 
         {/* Right column */}
         <div className="space-y-4">
-          {/* Risk meter */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground uppercase tracking-wider">Cyber Risk Level</CardTitle>
@@ -248,7 +293,7 @@ export default function Dashboard() {
               </div>
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
-                  className={`h-full rounded-full ${rankTier === "Elite Hacker" ? "bg-purple-400" : "bg-primary"}`}
+                  className="h-full rounded-full bg-primary"
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(rankProgress, 100)}%` }}
                   transition={{ duration: 1 }}
@@ -256,7 +301,9 @@ export default function Dashboard() {
               </div>
               <div className="flex justify-between text-xs mt-1 text-muted-foreground">
                 <span>Rank Progress</span>
-                {rankTier !== "Elite Hacker" && <span>Next: {RANK_THRESHOLDS[RANK_THRESHOLDS.findIndex(r => r.rank === rankTier) + 1]?.rank}</span>}
+                {rankTier !== "Elite Hacker" && (
+                  <span>Next: {RANK_THRESHOLDS[RANK_THRESHOLDS.findIndex(r => r.rank === rankTier) + 1]?.rank}</span>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -278,42 +325,114 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Mode scores */}
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <TrendingUp className="w-3 h-3" /> Performance
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 pb-4">
-              {modeScores.map((m) => (
-                <div key={m.label}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-muted-foreground">{m.label}</span>
-                    <span className="text-foreground font-mono">{m.score}</span>
-                  </div>
-                  <div className="h-1 bg-muted rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-primary/60 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min((m.score / 500) * 100, 100)}%` }}
-                      transition={{ duration: 1 }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
         </div>
       </div>
 
-      {/* Recent activity */}
+      {/* Performance Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Radar chart */}
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Target className="w-3.5 h-3.5" /> Skill Radar
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <ResponsiveContainer width="100%" height={180}>
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
+                <Radar name="Score" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Bar chart - mode scores */}
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <TrendingUp className="w-3.5 h-3.5" /> Mode Scores
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} />
+                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Line chart - recent activity */}
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5" /> Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-4">
+            {activityData.length > 1 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={activityData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} />
+                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--primary))" }} />
+                  <Line type="monotone" dataKey="xp" stroke="#eab308" strokeWidth={2} dot={{ r: 2, fill: "#eab308" }} strokeDasharray="4 2" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[180px] flex items-center justify-center text-xs text-muted-foreground font-mono">
+                Play more games to see trends
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Why This Matters */}
+      <Card className="bg-card border-border overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Shield className="w-4 h-4 text-primary" />
+            Why This Matters — Real-World Cybersecurity Impact
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pb-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            {CYBER_STATS.map(s => (
+              <motion.div
+                key={s.stat}
+                whileHover={{ scale: 1.02 }}
+                className="text-center p-3 bg-primary/5 border border-primary/20 rounded-xl"
+              >
+                <div className="text-xl font-black text-primary font-mono">{s.stat}</div>
+                <div className="text-xs font-semibold text-foreground mt-1 leading-tight">{s.label}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{s.sub}</div>
+              </motion.div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            CyberVerse AI trains you with <strong className="text-foreground">real attack patterns</strong> used by hackers today.
+            Every mission, hint, and skill you learn maps directly to <strong className="text-foreground">MITRE ATT&CK framework</strong> techniques —
+            the same standard used by Fortune 500 security teams. Your performance here predicts your ability to{" "}
+            <strong className="text-primary">stop real breaches before they happen</strong>.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Recent activity list */}
       {stats?.recentActivity && stats.recentActivity.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent Activity</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Operator Log</h2>
           <div className="space-y-2">
-            {stats.recentActivity.map((activity, i) => (
+            {stats.recentActivity.slice(0, 5).map((activity, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -10 }}
@@ -322,9 +441,9 @@ export default function Dashboard() {
                 className="flex items-center gap-4 p-3 bg-card rounded-lg border border-border text-sm"
               >
                 <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                <span className="text-muted-foreground capitalize w-24">{activity.mode.replace("_", " ")}</span>
-                <span className="text-foreground font-mono">+{activity.score} pts</span>
-                <span className="text-primary text-xs">+{activity.xpEarned} XP</span>
+                <span className="text-muted-foreground capitalize w-24 font-mono text-xs">{activity.mode.replace("_", " ")}</span>
+                <span className="text-foreground font-mono text-xs">+{activity.score} pts</span>
+                <span className="text-primary text-xs font-mono">+{activity.xpEarned} XP</span>
                 <span className="ml-auto text-xs text-muted-foreground">
                   {new Date(activity.createdAt).toLocaleDateString()}
                 </span>
