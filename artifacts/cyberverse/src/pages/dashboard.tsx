@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useGetDashboardStats, useGetUser, useClaimDailyBonus
@@ -108,6 +108,7 @@ export default function Dashboard() {
   const { data: user } = useGetUser();
   const claimDaily = useClaimDailyBonus();
   const [dailyClaimed, setDailyClaimed] = useState(false);
+  const welcomeName = user?.isTopHacker ? "Admin" : user?.username ?? "";
 
   const xpPercent = user ? (user.xp % 100) : 0;
   const rankTier = stats?.rankTier ?? "Bronze";
@@ -159,13 +160,19 @@ export default function Dashboard() {
 
   const rankColorClass = RANK_COLORS[rankTier] ?? "text-amber-600 border-amber-600/30";
 
+  useEffect(() => {
+    if (user?.username) {
+      document.title = user.isTopHacker ? "Welcome back, Admin" : `Welcome back, ${user.username}`;
+    }
+  }, [user?.isTopHacker, user?.username]);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Welcome back, <span className="text-primary font-mono">{user?.username}</span>
+            Welcome back, <span className="text-primary font-mono">{welcomeName}</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">SOC Dashboard — Mission Control Active</p>
         </div>

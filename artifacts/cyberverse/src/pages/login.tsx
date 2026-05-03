@@ -20,14 +20,15 @@ export default function Login() {
       onSuccess: (data) => {
         setToken(data.token);
         const role = (data.user as unknown as { role?: string }).role;
+        const username = data.user?.username ?? "agent";
         if (role === "admin") {
           // Admin users go to the Admin Control Panel
           localStorage.setItem("cv_is_admin", "true");
-          toast({ title: "Admin Access Granted", description: "Welcome, Administrator." });
+          toast({ title: "Admin Access Granted", description: "Welcome back, Admin." });
           setLocation("/admin");
         } else {
           localStorage.removeItem("cv_is_admin");
-          toast({ title: "Access Granted", description: "Welcome back, agent." });
+          toast({ title: "Access Granted", description: `Welcome back, ${username}.` });
           setLocation("/dashboard");
         }
       },
