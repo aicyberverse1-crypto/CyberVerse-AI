@@ -55,6 +55,10 @@ export default function SkillTree() {
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
           queryClient.invalidateQueries({ queryKey: ["/api/skills"] });
         },
+        onError: (err) => {
+          audioEffects.error();
+          toast({ title: "Switch failed", description: err.message, variant: "destructive" });
+        },
       }
     );
   }

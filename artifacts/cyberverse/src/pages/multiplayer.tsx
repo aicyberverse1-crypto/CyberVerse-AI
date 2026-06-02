@@ -79,8 +79,9 @@ export default function Multiplayer() {
 
   // Shuffled questions drawn from API
   const [activeQuestions, setActiveQuestions] = useState<typeof rawQuestions>([]);
-  const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
-  const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const aiTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advancedRef = useRef(false); // prevents double-fire from timer + click
 
   const { data: rawQuestions = [] } = useGetQuestions({ mode: mode as GetQuestionsMode, difficulty: "medium" });
 
@@ -122,6 +123,7 @@ export default function Multiplayer() {
   // ─── Load a question ───────────────────────────────────────────────────────
   const loadQuestion = useCallback((idx: number) => {
     clearTimers();
+    advancedRef.current = false; // reset guard for new question
     const qs: QuestionState = {
       answered: false, selectedIdx: null, correct: null,
       timeLeft: TIME_PER_QUESTION, scoreEarned: 0,
@@ -194,6 +196,8 @@ export default function Multiplayer() {
   }
 
   function advanceQuestion(next: number) {
+    if (advancedRef.current) return; // guard against timer + click double-fire
+    advancedRef.current = true;
     clearTimers();
     if (next >= TOTAL_QUESTIONS) {
       setPhase("result");
@@ -222,6 +226,7 @@ export default function Multiplayer() {
           else if (data.winner === "opponent")    { audioEffects.error();   toast({ title: "💀 Defeated", description: data.message, variant: "destructive" }); }
           else                                    { audioEffects.success(); toast({ title: "🤝 Draw!", description: data.message }); }
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
         },
         onError: () => {
           audioEffects.error();

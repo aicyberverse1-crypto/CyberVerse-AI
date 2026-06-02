@@ -12,6 +12,8 @@ export function setToken(token: string): void {
 
 export function removeToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("cv_is_admin");
+  localStorage.removeItem("cv_username");
 }
 
 // Setup the API client to use the token

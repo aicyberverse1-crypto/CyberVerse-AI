@@ -1,5 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard, Mail, Shield, Lock, Bot, Trophy, LogOut, Activity,
@@ -61,8 +62,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [location, setLocation] = useLocation();
   const { data: user } = useGetUser();
 
+  const queryClient = useQueryClient();
+
   function handleLogout() {
     removeToken();
+    queryClient.clear();
     setLocation("/");
   }
 

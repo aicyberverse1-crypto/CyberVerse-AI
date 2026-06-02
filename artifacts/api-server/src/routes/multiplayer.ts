@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, scoresTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -82,13 +82,17 @@ router.post("/multiplayer/challenge", requireAuth, async (req: AuthRequest, res)
     message = "A perfect tie! Equally matched operators.";
   }
 
-  const newXp = user.xp + xpEarned;
-  const newLevel = Math.floor(newXp / 100) + 1;
-  const newHintPoints = user.hintPoints + hintPointsEarned;
+  const newWinStreak = winner === "player" ? (user.winStreak ?? 0) + 1 : 0;
 
   await db
     .update(usersTable)
-    .set({ xp: newXp, level: newLevel, hintPoints: newHintPoints })
+    .set({
+      xp: sql`${usersTable.xp} + ${xpEarned}`,
+      level: sql`FLOOR((${usersTable.xp} + ${xpEarned}) / 100) + 1`,
+      hintPoints: sql`${usersTable.hintPoints} + ${hintPointsEarned}`,
+      totalScore: sql`${usersTable.totalScore} + ${finalPlayerScore}`,
+      winStreak: newWinStreak,
+    })
     .where(eq(usersTable.id, user.id));
 
   await db.insert(scoresTable).values({

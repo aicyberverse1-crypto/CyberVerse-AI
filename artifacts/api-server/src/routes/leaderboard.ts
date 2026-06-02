@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, scoresTable } from "@workspace/db";
-import { desc, gte, sql } from "drizzle-orm";
+import { desc, gte, inArray, sql } from "drizzle-orm";
 import { GetLeaderboardQueryParams } from "@workspace/api-zod";
 import { getStreakTitle } from "../lib/userProfile";
 
@@ -90,7 +90,8 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
 
     const userDetails = await db
       .select({ ...userFields })
-      .from(usersTable);
+      .from(usersTable)
+      .where(inArray(usersTable.id, userIds));
 
     const userMap = new Map(userDetails.map((u) => [u.id, u]));
 

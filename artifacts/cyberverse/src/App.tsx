@@ -111,6 +111,25 @@ function ProtectedRoute({ component: Comp }: { component: React.LazyExoticCompon
   );
 }
 
+// ─── Admin route — requires both JWT token AND admin flag ─────────────────────
+function AdminRoute() {
+  const [, setLocation] = useLocation();
+  const token = getToken();
+  const isAdmin = localStorage.getItem("cv_is_admin") === "true";
+
+  useEffect(() => {
+    if (!token || !isAdmin) setLocation("/");
+  }, [token, isAdmin, setLocation]);
+
+  if (!token || !isAdmin) return null;
+
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Admin />
+    </Suspense>
+  );
+}
+
 // ─── Router ───────────────────────────────────────────────────────────────────
 function Router() {
   return (
@@ -136,7 +155,7 @@ function Router() {
         <Route path="/profile"      component={() => <ProtectedRoute component={Profile} />} />
         <Route path="/terminal"     component={() => <ProtectedRoute component={Terminal} />} />
         <Route path="/story"        component={() => <ProtectedRoute component={Story} />} />
-        <Route path="/admin"        component={() => <Suspense fallback={<PageLoader />}><Admin /></Suspense>} />
+        <Route path="/admin"        component={() => <AdminRoute />} />
 
         <Route component={NotFound} />
       </Switch>

@@ -143,10 +143,14 @@ export default function Missions() {
       {
         onSuccess: (data) => {
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
           if (data.leveledUp) {
             audioEffects.levelUp();
             toast({ title: "LEVEL UP!", description: `Now Level ${data.level}!` });
           }
+        },
+        onError: () => {
+          toast({ title: "Score submission failed", description: "Your progress may not have saved.", variant: "destructive" });
         },
       }
     );

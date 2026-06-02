@@ -58,8 +58,18 @@ const aiLimiter = rateLimit({
   message: { error: "AI rate limit reached. Please wait a moment." },
 });
 
+const scoreLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many score submissions. Slow down." },
+});
+
 app.use("/api/auth", authLimiter);
 app.use("/api/ai", aiLimiter);
+app.use("/api/score", scoreLimiter);
+app.use("/api/multiplayer", scoreLimiter);
 
 // ─── Request Logging ──────────────────────────────────────────────────────────
 app.use(
@@ -82,6 +92,11 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api", router);
+
+// ─── 404 Handler ──────────────────────────────────────────────────────────────
+app.use((_req: express.Request, res: express.Response) => {
+  res.status(404).json({ error: "Not found" });
+});
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
