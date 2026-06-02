@@ -53,6 +53,10 @@ const BADGE_COLORS: Record<string, string> = {
   "LIVE": "bg-red-400/10 text-red-400 border-red-400/20",
 };
 
+// Nav items highlighted as "priority" per role
+const ATTACKER_PRIORITY = new Set(["/escape", "/terminal", "/dark-web", "/missions"]);
+const DEFENDER_PRIORITY = new Set(["/phishing", "/defense", "/builder", "/dark-web"]);
+
 export default function AppLayout({ children }: { children: ReactNode }) {
   const [location, setLocation] = useLocation();
   const { data: user } = useGetUser();
@@ -67,6 +71,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const streakDays = user?.streakDays ?? 0;
   const isOnFire = streakDays >= 5;
   const isUnstoppable = streakDays >= 10;
+  const isAttacker = user?.hackerType === "attacker";
+  const prioritySet = isAttacker ? ATTACKER_PRIORITY : DEFENDER_PRIORITY;
 
   // Groups for sidebar sections
   const groups = ["main", "play", "intel", "progress", "tools"];
@@ -90,10 +96,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
         {/* User mini profile */}
         {user && (
-          <div className={`px-4 py-3 border-b border-border ${isUnstoppable ? "bg-red-400/5" : isOnFire ? "bg-orange-400/5" : ""}`}>
+          <div className={`px-4 py-3 border-b border-border ${
+            isUnstoppable ? "bg-red-400/5" :
+            isOnFire ? "bg-orange-400/5" :
+            isAttacker ? "bg-red-400/5" : "bg-primary/5"
+          }`}>
+            {/* Role banner */}
+            <div className={`text-[9px] font-bold font-mono tracking-widest mb-1.5 ${isAttacker ? "text-red-400" : "text-primary"}`}>
+              {isAttacker ? "⚔ RED TEAM — ATTACKER" : "🛡 BLUE TEAM — DEFENDER"}
+            </div>
             <div className="flex items-center gap-2">
-              <div className={`text-xs font-bold font-mono ${user.hackerType === "attacker" ? "text-red-400" : "text-primary"}`}>
-                {user.hackerType === "attacker" ? "⚔" : "🛡"} {user.username}
+              <div className={`text-xs font-bold font-mono ${isAttacker ? "text-red-400" : "text-primary"}`}>
+                {user.username}
               </div>
             </div>
             {/* Streak title */}
@@ -154,18 +168,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                           whileHover={{ x: 3 }}
                           className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer text-xs transition-colors ${
                             active
-                              ? "bg-primary/15 text-primary border border-primary/30"
+                              ? isAttacker
+                                ? "bg-red-400/15 text-red-400 border border-red-400/30"
+                                : "bg-primary/15 text-primary border border-primary/30"
+                              : prioritySet.has(item.path) && !active
+                              ? isAttacker
+                                ? "text-red-400/70 hover:text-red-400 hover:bg-red-400/10"
+                                : "text-primary/70 hover:text-primary hover:bg-primary/10"
                               : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                           }`}
                         >
                           <Icon className="w-3.5 h-3.5 shrink-0" />
                           <span className="flex-1">{item.label}</span>
+                          {prioritySet.has(item.path) && !active && (
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAttacker ? "bg-red-400/60" : "bg-primary/60"}`} />
+                          )}
                           {item.badge && (
                             <span className={`text-[9px] px-1.5 py-0.5 rounded border font-mono ${BADGE_COLORS[item.badge]}`}>
                               {item.badge}
                             </span>
                           )}
-                          {active && <motion.div layoutId="active-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                          {active && (
+                            <motion.div layoutId="active-dot" className={`ml-auto w-1.5 h-1.5 rounded-full ${isAttacker ? "bg-red-400" : "bg-primary"}`} />
+                          )}
                         </motion.div>
                       </Link>
                     );

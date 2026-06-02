@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Mail, Shield, Lock, Activity, Trophy, Bot, ChevronRight,
-  Zap, Target, TrendingUp, Lightbulb, Gift, Flame, Users, Swords, Globe
+  Zap, Target, TrendingUp, Lightbulb, Gift, Flame, Users, Swords, Globe,
+  Terminal, BookOpen, AlertTriangle, Eye
 } from "lucide-react";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer,
@@ -20,15 +21,58 @@ import { useQueryClient } from "@tanstack/react-query";
 import { audioEffects } from "@/hooks/useAudio";
 import { BadgeDisplay, StreakTitle, IdentityLine } from "@/components/BadgeDisplay";
 
-const MODES = [
-  { path: "/phishing", label: "Phishing Detective", icon: Mail, desc: "Identify phishing & social engineering", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/30" },
-  { path: "/defense", label: "Attack Defense", icon: Shield, desc: "Defend against live cyber attacks", color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/30" },
-  { path: "/builder", label: "Secure Builder", icon: Lock, desc: "Design secure authentication systems", color: "text-primary", bg: "bg-primary/10 border-primary/30" },
-  { path: "/escape", label: "Escape Room", icon: Activity, desc: "Solve cryptographic puzzles to escape", color: "text-purple-400", bg: "bg-purple-400/10 border-purple-400/30" },
-  { path: "/multiplayer", label: "Multiplayer", icon: Users, desc: "Challenge AI opponents in cyber battles", color: "text-orange-400", bg: "bg-orange-400/10 border-orange-400/30" },
-  { path: "/missions", label: "AI Missions", icon: Swords, desc: "Personalized AI-generated challenges", color: "text-red-400", bg: "bg-red-400/10 border-red-400/30" },
-  { path: "/dark-web", label: "Dark Web Intel", icon: Globe, desc: "Investigate dark web threat marketplace", color: "text-primary", bg: "bg-primary/10 border-primary/30" },
+// Blue Team (Defender) — defensive skills first
+const DEFENDER_MODES = [
+  { path: "/phishing",    label: "Phishing Detective",  icon: Mail,     desc: "Identify phishing & social engineering",    color: "text-yellow-400",  bg: "bg-yellow-400/10 border-yellow-400/30",  tag: "CORE" },
+  { path: "/defense",     label: "Attack Defense",      icon: Shield,   desc: "Defend against live cyber attacks",         color: "text-blue-400",    bg: "bg-blue-400/10 border-blue-400/30",      tag: "CORE" },
+  { path: "/builder",     label: "Secure Builder",      icon: Lock,     desc: "Design secure authentication systems",      color: "text-primary",     bg: "bg-primary/10 border-primary/30",        tag: "CORE" },
+  { path: "/dark-web",    label: "Dark Web Intel",      icon: Globe,    desc: "Monitor and neutralize dark web threats",   color: "text-primary",     bg: "bg-primary/10 border-primary/30",        tag: null },
+  { path: "/escape",      label: "Escape Room",         icon: Activity, desc: "Solve cryptographic puzzles to escape",     color: "text-purple-400",  bg: "bg-purple-400/10 border-purple-400/30",  tag: null },
+  { path: "/missions",    label: "AI Missions",         icon: Swords,   desc: "Personalized AI-generated challenges",      color: "text-red-400",     bg: "bg-red-400/10 border-red-400/30",        tag: null },
+  { path: "/multiplayer", label: "Battle Mode",         icon: Users,    desc: "Challenge AI opponents in cyber battles",   color: "text-orange-400",  bg: "bg-orange-400/10 border-orange-400/30",  tag: null },
 ];
+
+// Red Team (Attacker) — offensive skills first
+const ATTACKER_MODES = [
+  { path: "/escape",      label: "Escape Room",         icon: Activity, desc: "Crack ciphers & exploit vulnerabilities",   color: "text-red-400",     bg: "bg-red-400/10 border-red-400/30",        tag: "CORE" },
+  { path: "/terminal",    label: "Hacker Terminal",     icon: Terminal, desc: "Execute real CLI commands & exploits",      color: "text-red-400",     bg: "bg-red-400/10 border-red-400/30",        tag: "CORE" },
+  { path: "/dark-web",    label: "Dark Web Intel",      icon: Globe,    desc: "Infiltrate & investigate threat networks",  color: "text-orange-400",  bg: "bg-orange-400/10 border-orange-400/30",  tag: "CORE" },
+  { path: "/missions",    label: "AI Missions",         icon: Swords,   desc: "Personalized offensive AI challenges",      color: "text-red-400",     bg: "bg-red-400/10 border-red-400/30",        tag: null },
+  { path: "/multiplayer", label: "Battle Mode",         icon: Users,    desc: "Defeat AI opponents to climb the ranks",    color: "text-orange-400",  bg: "bg-orange-400/10 border-orange-400/30",  tag: null },
+  { path: "/story",       label: "Story Mode",          icon: BookOpen, desc: "Follow the hacker's journey — 4 chapters",  color: "text-purple-400",  bg: "bg-purple-400/10 border-purple-400/30",  tag: null },
+  { path: "/phishing",    label: "Phishing Detective",  icon: Mail,     desc: "Understand attacker tactics up close",      color: "text-yellow-400",  bg: "bg-yellow-400/10 border-yellow-400/30",  tag: null },
+];
+
+// Role directives shown in the dashboard
+const DEFENDER_DIRECTIVE = {
+  role: "Blue Team Defender",
+  emoji: "🛡️",
+  color: "text-primary",
+  border: "border-primary/30",
+  bg: "bg-primary/5",
+  badge: "bg-primary/10 text-primary border-primary/20",
+  tagline: "Protect. Detect. Respond.",
+  objectives: [
+    "Master phishing recognition to stop 94% of breaches at the source",
+    "Practice attack defense to shrink your mean-time-to-respond",
+    "Build secure systems — every vulnerability you close is an attack stopped",
+  ],
+};
+
+const ATTACKER_DIRECTIVE = {
+  role: "Red Team Attacker",
+  emoji: "⚔️",
+  color: "text-red-400",
+  border: "border-red-400/30",
+  bg: "bg-red-400/5",
+  badge: "bg-red-400/10 text-red-400 border-red-400/20",
+  tagline: "Exploit. Infiltrate. Report.",
+  objectives: [
+    "Run the Hacker Terminal — practice real exploit patterns in a safe sandbox",
+    "Dominate the Escape Room — crack ciphers faster than anyone on the leaderboard",
+    "Use Dark Web Intel to understand attacker infrastructure from the inside",
+  ],
+};
 
 const RANK_COLORS: Record<string, string> = {
   "Bronze": "text-amber-600 border-amber-600/30",
@@ -109,7 +153,10 @@ export default function Dashboard() {
   const { data: user } = useGetUser();
   const claimDaily = useClaimDailyBonus();
   const [dailyClaimed, setDailyClaimed] = useState(false);
-  const welcomeName = user?.isTopHacker ? "Admin" : user?.username ?? "";
+  const welcomeName = user?.username ?? "";
+  const isAttacker = user?.hackerType === "attacker";
+  const directive = isAttacker ? ATTACKER_DIRECTIVE : DEFENDER_DIRECTIVE;
+  const activeModes = isAttacker ? ATTACKER_MODES : DEFENDER_MODES;
 
   const xpPercent = user ? (user.xp % 100) : 0;
   const rankTier = stats?.rankTier ?? "Bronze";
@@ -167,21 +214,27 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user?.username) {
-      const isAdmin = (user as any).role === "admin";
-      document.title = isAdmin ? "Welcome back, Admin" : `Welcome back, ${user.username}`;
+      document.title = `CyberVerse — ${user.username}`;
     }
-  }, [(user as any)?.role, user?.username]);
+  }, [user?.username]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-xs font-bold font-mono px-2 py-0.5 rounded border ${directive.badge}`}>
+              {directive.emoji} {directive.role.toUpperCase()}
+            </span>
+            {user?.isTopHacker && (
+              <Badge className="bg-yellow-400/20 border-yellow-400/40 text-yellow-400 text-[10px]">👑 Top Hacker</Badge>
+            )}
+          </div>
           <h1 className={`text-2xl font-bold text-foreground ${isUnstoppable ? "drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]" : isOnFire ? "drop-shadow-[0_0_6px_rgba(251,146,60,0.4)]" : ""}`}>
-            Welcome back, <span className="text-primary font-mono">{welcomeName}</span>
+            Welcome back, <span className={`font-mono ${directive.color}`}>{welcomeName}</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">SOC Dashboard — Mission Control Active</p>
-          {/* Full identity line */}
+          <p className={`text-xs font-mono mt-0.5 ${directive.color} opacity-70`}>{directive.tagline}</p>
           {user && (
             <div className="mt-2">
               <IdentityLine
@@ -195,14 +248,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {user?.isTopHacker && (
-            <Badge className="bg-yellow-400/20 border-yellow-400/40 text-yellow-400">👑 Top Hacker of the Day</Badge>
-          )}
-          <Badge variant="outline" className={`text-xs ${rankColorClass}`}>
-            {user?.rankTier ?? "Bronze"} Operator
-          </Badge>
-        </div>
+        <Badge variant="outline" className={`text-xs shrink-0 ${rankColorClass}`}>
+          {user?.rankTier ?? "Bronze"} Operator
+        </Badge>
       </div>
 
       {/* Daily Bonus + Streak */}
@@ -279,9 +327,33 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Game modes */}
         <div className="lg:col-span-2 space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mission Select</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {isAttacker ? "⚔️ Red Team Missions" : "🛡️ Blue Team Missions"}
+            </h2>
+            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${directive.badge}`}>
+              CORE = Priority Training
+            </span>
+          </div>
+
+          {/* Role directive card */}
+          <div className={`p-4 rounded-xl border ${directive.border} ${directive.bg} space-y-2`}>
+            <p className={`text-xs font-bold ${directive.color} flex items-center gap-1.5`}>
+              {isAttacker ? <AlertTriangle className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              {isAttacker ? "Red Team Objectives" : "Blue Team Objectives"}
+            </p>
+            <ul className="space-y-1.5">
+              {directive.objectives.map((obj, i) => (
+                <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                  <span className={`mt-0.5 shrink-0 ${directive.color}`}>›</span>
+                  {obj}
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {MODES.map((mode, i) => (
+            {activeModes.map((mode, i) => (
               <motion.div
                 key={mode.path}
                 initial={{ opacity: 0, x: -20 }}
@@ -289,15 +361,20 @@ export default function Dashboard() {
                 transition={{ delay: i * 0.05 }}
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setLocation(mode.path)}
-                className={`cursor-pointer p-4 rounded-xl border ${mode.bg} hover:shadow-lg transition-all`}
+                className={`cursor-pointer p-4 rounded-xl border ${mode.bg} hover:shadow-lg transition-all relative overflow-hidden`}
               >
+                {mode.tag && (
+                  <span className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono ${
+                    isAttacker ? "bg-red-400/20 text-red-400" : "bg-primary/20 text-primary"
+                  }`}>{mode.tag}</span>
+                )}
                 <div className="flex items-start gap-3">
                   <mode.icon className={`w-5 h-5 ${mode.color} mt-0.5 shrink-0`} />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-8">
                     <p className={`text-sm font-semibold ${mode.color}`}>{mode.label}</p>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{mode.desc}</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 </div>
               </motion.div>
             ))}
