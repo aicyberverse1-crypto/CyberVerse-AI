@@ -12,9 +12,19 @@ import { useQueryClient } from "@tanstack/react-query";
 const TIMER_SECONDS = 60;
 const DIFF_HINT_COST: Record<string, number> = { Easy: 10, Medium: 15, Hard: 25, Expert: 40 };
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+
 export default function Escape() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [shuffledQuestions, setShuffledQuestions] = useState<typeof questions>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
@@ -34,10 +44,15 @@ export default function Escape() {
     { query: { queryKey: getGetQuestionsQueryKey({ mode: "escape" }) } }
   );
 
+  // Shuffle questions once loaded
+  useEffect(() => {
+    if (questions.length > 0) setShuffledQuestions(shuffle(questions));
+  }, [questions]);
+
   const submitScore = useSubmitScore();
   const getHint = useGetAiHint();
 
-  const question = questions[currentIndex];
+  const question = shuffledQuestions[currentIndex];
   const answered = selected !== null || timedOut;
   const correct = selected !== null && selected === question?.correctAnswer;
   const hintPointCost = DIFF_HINT_COST[question?.difficulty ?? "Medium"] ?? 15;
@@ -49,9 +64,17 @@ export default function Escape() {
       setTimedOut(true);
       setFlash("wrong");
       setTimeout(() => setFlash(null), 600);
-      submitScore.mutate({ data: { mode: "escape", score: 0, xpEarned: 2, isCorrect: false, responseTimeMs: TIMER_SECONDS * 1000 } });
+      submitScore.mutate(
+        { data: { mode: "escape", score: 0, xpEarned: 2, isCorrect: false, responseTimeMs: TIMER_SECONDS * 1000 } },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
+          },
+        }
+      );
     }
-  }, [answered]);
+  }, [answered, submitScore, queryClient]);
 
   useEffect(() => {
     if (answered) return;
@@ -102,6 +125,7 @@ export default function Escape() {
       {
         onSuccess: (data) => {
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
           if (data.leveledUp) {
             audioEffects.levelUp();
             toast({ title: "LEVEL UP!", description: `Now Level ${data.level}!` });
@@ -112,7 +136,7 @@ export default function Escape() {
   }
 
   function handleNext() {
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < shuffledQuestions.length - 1) {
       setCurrentIndex(i => i + 1);
       setSelected(null);
       setTimedOut(false);
@@ -123,6 +147,7 @@ export default function Escape() {
   }
 
   function handleReset() {
+    setShuffledQuestions(shuffle(questions));
     setCurrentIndex(0);
     setSelected(null);
     setTimedOut(false);
@@ -161,7 +186,7 @@ export default function Escape() {
   }
 
   if (completed) {
-    const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
+    const accuracy = shuffledQuestions.length > 0 ? Math.round((correctCount / shuffledQuestions.length) * 100) : 0;
     return (
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-xl mx-auto text-center space-y-6 pt-8">
         <div className="w-16 h-16 bg-purple-400/20 rounded-full flex items-center justify-center mx-auto">
@@ -220,7 +245,7 @@ export default function Escape() {
           <div className={`flex items-center gap-1.5 px-2 py-1 rounded border text-xs font-mono ${timeLeft <= 10 ? "border-red-400/50 text-red-400 animate-pulse" : "border-border text-foreground"}`}>
             <Timer className="w-3.5 h-3.5" /> {timeLeft}s
           </div>
-          <Badge variant="outline" className="font-mono border-purple-400/30 text-purple-400">{currentIndex + 1} / {questions.length}</Badge>
+          <Badge variant="outline" className="font-mono border-purple-400/30 text-purple-400">{currentIndex + 1} / {shuffledQuestions.length}</Badge>
           <Badge variant="outline" className="font-mono text-primary">{score} pts</Badge>
           {user && <Badge variant="outline" className="font-mono text-yellow-400 border-yellow-400/30"><span className="text-[10px] mr-1">HP</span>{user.hintPoints}</Badge>}
         </div>
@@ -338,7 +363,7 @@ export default function Escape() {
         )}
         {answered && (
           <Button onClick={handleNext} className="ml-auto gap-2 bg-purple-400 text-white hover:bg-purple-400/90">
-            {currentIndex < questions.length - 1 ? "Next Puzzle" : "Escape Complete"}
+            {currentIndex < shuffledQuestions.length - 1 ? "Next Puzzle" : "Escape Complete"}
             <ChevronRight className="w-4 h-4" />
           </Button>
         )}

@@ -12,9 +12,19 @@ import { useQueryClient } from "@tanstack/react-query";
 const TIMER_SECONDS = 30;
 const DIFF_HINT_COST: Record<string, number> = { Easy: 10, Medium: 15, Hard: 25, Expert: 40 };
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+
 export default function Defense() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [shuffledQuestions, setShuffledQuestions] = useState<typeof questions>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
@@ -34,10 +44,15 @@ export default function Defense() {
     { query: { queryKey: getGetQuestionsQueryKey({ mode: "defense" }) } }
   );
 
+  // Shuffle questions once loaded
+  useEffect(() => {
+    if (questions.length > 0) setShuffledQuestions(shuffle(questions));
+  }, [questions]);
+
   const submitScore = useSubmitScore();
   const getHint = useGetAiHint();
 
-  const question = questions[currentIndex];
+  const question = shuffledQuestions[currentIndex];
   const answered = selected !== null || timedOut;
   const correct = selected !== null && selected === question?.correctAnswer;
   const hintPointCost = DIFF_HINT_COST[question?.difficulty ?? "Medium"] ?? 15;
@@ -48,9 +63,17 @@ export default function Defense() {
       setTimedOut(true);
       setFlash("wrong");
       setTimeout(() => setFlash(null), 600);
-      submitScore.mutate({ data: { mode: "defense", score: 0, xpEarned: 2, isCorrect: false, responseTimeMs: TIMER_SECONDS * 1000 } });
+      submitScore.mutate(
+        { data: { mode: "defense", score: 0, xpEarned: 2, isCorrect: false, responseTimeMs: TIMER_SECONDS * 1000 } },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
+          },
+        }
+      );
     }
-  }, [answered]);
+  }, [answered, submitScore, queryClient]);
 
   useEffect(() => {
     if (answered) return;
@@ -88,6 +111,7 @@ export default function Defense() {
       {
         onSuccess: (data) => {
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
           if (data.leveledUp) {
             audioEffects.levelUp();
             toast({ title: "LEVEL UP!", description: `Now Level ${data.level}!` });
@@ -98,7 +122,7 @@ export default function Defense() {
   }
 
   function handleNext() {
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < shuffledQuestions.length - 1) {
       setCurrentIndex(i => i + 1);
       setSelected(null);
       setTimedOut(false);
@@ -112,6 +136,7 @@ export default function Defense() {
   }
 
   function handleReset() {
+    setShuffledQuestions(shuffle(questions));
     setCurrentIndex(0);
     setSelected(null);
     setTimedOut(false);
@@ -149,7 +174,7 @@ export default function Defense() {
   }
 
   if (completed) {
-    const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
+    const accuracy = shuffledQuestions.length > 0 ? Math.round((correctCount / shuffledQuestions.length) * 100) : 0;
     return (
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-xl mx-auto text-center space-y-6 pt-8">
         <div className="w-16 h-16 bg-blue-400/20 rounded-full flex items-center justify-center mx-auto">
@@ -161,7 +186,7 @@ export default function Defense() {
         </div>
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: "Correct", value: `${correctCount}/${questions.length}` },
+            { label: "Correct", value: `${correctCount}/${shuffledQuestions.length}` },
             { label: "Accuracy", value: `${accuracy}%` },
             { label: "Score", value: score },
           ].map(stat => (
@@ -208,7 +233,7 @@ export default function Defense() {
           <div className={`flex items-center gap-1.5 px-2 py-1 rounded border text-xs font-mono ${timeLeft <= 5 ? "border-red-400/50 text-red-400" : "border-border text-foreground"}`}>
             <Timer className="w-3.5 h-3.5" /> {timeLeft}s
           </div>
-          <Badge variant="outline" className="font-mono border-blue-400/30 text-blue-400">{currentIndex + 1} / {questions.length}</Badge>
+          <Badge variant="outline" className="font-mono border-blue-400/30 text-blue-400">{currentIndex + 1} / {shuffledQuestions.length}</Badge>
           <Badge variant="outline" className="font-mono text-primary">{score} pts</Badge>
           {user && <Badge variant="outline" className="font-mono text-yellow-400 border-yellow-400/30"><span className="text-[10px] mr-1">HP</span>{user.hintPoints}</Badge>}
         </div>
@@ -320,7 +345,7 @@ export default function Defense() {
         )}
         {answered && (
           <Button onClick={handleNext} className="ml-auto gap-2 bg-blue-400 text-white hover:bg-blue-400/90">
-            {currentIndex < questions.length - 1 ? "Next Threat" : "Complete Mission"}
+            {currentIndex < shuffledQuestions.length - 1 ? "Next Threat" : "Complete Mission"}
             <ChevronRight className="w-4 h-4" />
           </Button>
         )}

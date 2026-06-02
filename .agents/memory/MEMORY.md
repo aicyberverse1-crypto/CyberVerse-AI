@@ -3,3 +3,9 @@
 - [Badge types](badge-types.md) — BADGE_DEFS is `as const`; cast user.badges as BadgeKey[] at every call site; do not widen to string[]
 - [Vite code splitting](vite-codesplit.md) — manualChunks splits react/framer-motion/recharts/lucide/radix/tanstack/wouter into named chunks
 - [React app structure](react-app-structure.md) — App.tsx uses React.lazy + Suspense per route; ErrorBoundary class wraps entire tree; ProtectedRoute accepts LazyExoticComponent
+- [Atomic DB updates pattern](atomic-db-updates.md) — use sql\`${col} + ${val}\` for additive fields; use .returning() with WHERE to detect lost races (daily-claim, skill unlock, hint deduction)
+- [AI route error handling](ai-route-errors.md) — all OpenAI calls (hint/chat/news) wrapped in try-catch; hint refunds points on AI failure; news returns 503+useFallback; missions return hardcoded fallback
+- [Frontend query invalidation](frontend-invalidations.md) — all game pages must invalidate both /api/user AND /api/stats/dashboard after score submission and on timeout
+- [Question shuffle pattern](question-shuffle.md) — Fisher-Yates shuffle via useEffect on load; re-shuffle in handleReset; use shuffledQuestions state throughout
+- [Admin delete transaction](admin-delete-tx.md) — delete scores then user must be wrapped in db.transaction() to prevent orphan scores
+- [Render.com deployment](render-deployment.md) — render.yaml at project root: API web service (node, port 10000, /api/healthz), frontend static site with SPA rewrite + /api/* proxy

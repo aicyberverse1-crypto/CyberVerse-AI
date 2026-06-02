@@ -47,19 +47,34 @@ router.get("/admin/users", requireAdmin, async (req: AuthRequest, res): Promise<
   );
 });
 
-// DELETE /api/admin/users/:id
+// DELETE /api/admin/users/:id — delete user + their scores in a transaction
 router.delete("/admin/users/:id", requireAdmin, async (req: AuthRequest, res): Promise<void> => {
   const id = parseInt(req.params["id"] as string, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid user ID" }); return; }
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
+
   const [target] = await db.select().from(usersTable).where(eq(usersTable.id, id));
-  if (!target) { res.status(404).json({ error: "User not found" }); return; }
-  if (target.role === "admin") { res.status(403).json({ error: "Cannot delete admin users" }); return; }
-  await db.delete(scoresTable).where(eq(scoresTable.userId, id));
-  await db.delete(usersTable).where(eq(usersTable.id, id));
+  if (!target) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  if (target.role === "admin") {
+    res.status(403).json({ error: "Cannot delete admin users" });
+    return;
+  }
+
+  // Wrap in a transaction so scores + user are deleted atomically
+  await db.transaction(async (tx) => {
+    await tx.delete(scoresTable).where(eq(scoresTable.userId, id));
+    await tx.delete(usersTable).where(eq(usersTable.id, id));
+  });
+
   res.json({ success: true, message: `User "${target.username}" deleted` });
 });
 
-// GET /api/admin/analytics — platform analytics + new fields
+// GET /api/admin/analytics — platform analytics
 router.get("/admin/analytics", requireAdmin, async (_req, res): Promise<void> => {
   const [totals] = await db
     .select({
@@ -71,7 +86,6 @@ router.get("/admin/analytics", requireAdmin, async (_req, res): Promise<void> =>
     .from(usersTable)
     .where(ne(usersTable.role, "admin"));
 
-  // Highest score
   const [topScorer] = await db
     .select({ totalScore: usersTable.totalScore })
     .from(usersTable)
@@ -79,7 +93,6 @@ router.get("/admin/analytics", requireAdmin, async (_req, res): Promise<void> =>
     .orderBy(desc(usersTable.totalScore))
     .limit(1);
 
-  // Active today (last daily reset = today)
   const todayStr = new Date().toDateString();
   const allUsers = await db
     .select({ rankTier: usersTable.rankTier, lastDailyReset: usersTable.lastDailyReset })
@@ -95,7 +108,6 @@ router.get("/admin/analytics", requireAdmin, async (_req, res): Promise<void> =>
     rankDist[u.rankTier] = (rankDist[u.rankTier] ?? 0) + 1;
   }
 
-  // Top 5 performers
   const topUsers = await db
     .select({ id: usersTable.id, username: usersTable.username, totalScore: usersTable.totalScore, rankTier: usersTable.rankTier, accuracyRate: usersTable.accuracyRate, hackerType: usersTable.hackerType })
     .from(usersTable)
@@ -103,7 +115,6 @@ router.get("/admin/analytics", requireAdmin, async (_req, res): Promise<void> =>
     .orderBy(desc(usersTable.totalScore))
     .limit(5);
 
-  // Bottom 5
   const bottomUsers = await db
     .select({ id: usersTable.id, username: usersTable.username, totalScore: usersTable.totalScore, rankTier: usersTable.rankTier, accuracyRate: usersTable.accuracyRate, hackerType: usersTable.hackerType })
     .from(usersTable)
@@ -134,19 +145,17 @@ router.get("/admin/user-growth", requireAdmin, async (_req, res): Promise<void> 
     .from(usersTable)
     .where(and(ne(usersTable.role, "admin"), gte(usersTable.createdAt, thirtyDaysAgo)));
 
-  // Group by date
   const grouped: Record<string, number> = {};
   for (const u of users) {
     const key = u.createdAt.toISOString().split("T")[0];
-    grouped[key] = (grouped[key] ?? 0) + 1;
+    grouped[key!] = (grouped[key!] ?? 0) + 1;
   }
 
-  // Fill in last 14 days with 0 if missing, for smooth chart
   const result: { date: string; users: number }[] = [];
   for (let i = 13; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().split("T")[0];
+    const key = d.toISOString().split("T")[0]!;
     result.push({ date: key, users: grouped[key] ?? 0 });
   }
 
@@ -182,27 +191,25 @@ router.get("/admin/monthly-performance", requireAdmin, async (_req, res): Promis
     .from(scoresTable)
     .where(gte(scoresTable.createdAt, sixMonthsAgo));
 
-  // Group by YYYY-MM
   const grouped: Record<string, number> = {};
   for (const s of scores) {
-    const key = s.createdAt.toISOString().slice(0, 7); // YYYY-MM
+    const key = s.createdAt.toISOString().slice(0, 7);
     grouped[key] = (grouped[key] ?? 0) + s.score;
   }
 
-  // Build last 6 months
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const result: { month: string; points: number }[] = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
     d.setMonth(d.getMonth() - i);
     const key = d.toISOString().slice(0, 7);
-    result.push({ month: MONTHS[d.getMonth()], points: grouped[key] ?? 0 });
+    result.push({ month: MONTHS[d.getMonth()]!, points: grouped[key] ?? 0 });
   }
 
   res.json(result);
 });
 
-// GET /api/admin/report-data?month=0..11|all — data for PDF report
+// GET /api/admin/report-data?month=0..11|all
 router.get("/admin/report-data", requireAdmin, async (req: AuthRequest, res): Promise<void> => {
   const monthParam = req.query.month as string;
 
@@ -217,12 +224,7 @@ router.get("/admin/report-data", requireAdmin, async (req: AuthRequest, res): Pr
   if (monthParam !== "all" && monthParam !== undefined) {
     const monthIdx = parseInt(monthParam, 10);
     if (!isNaN(monthIdx)) {
-      // Filter users who were active in this month (have a lastDailyReset in that month)
-      filteredUsers = users.filter((u) => {
-        if (!u.lastDailyReset) return false;
-        return u.lastDailyReset.getMonth() === monthIdx;
-      });
-      // If no active users for that month, just return all users
+      filteredUsers = users.filter((u) => u.lastDailyReset?.getMonth() === monthIdx);
       if (filteredUsers.length === 0) filteredUsers = users;
     }
   }

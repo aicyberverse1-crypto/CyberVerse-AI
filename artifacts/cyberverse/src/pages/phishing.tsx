@@ -11,9 +11,19 @@ import { useQueryClient } from "@tanstack/react-query";
 
 const DIFF_HINT_COST: Record<string, number> = { Easy: 10, Medium: 15, Hard: 25, Expert: 40 };
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+
 export default function Phishing() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [shuffledQuestions, setShuffledQuestions] = useState<typeof questions>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [hint, setHint] = useState<string | null>(null);
@@ -31,10 +41,15 @@ export default function Phishing() {
     { query: { queryKey: getGetQuestionsQueryKey({ mode: "phishing" }) } }
   );
 
+  // Shuffle questions once loaded
+  useEffect(() => {
+    if (questions.length > 0) setShuffledQuestions(shuffle(questions));
+  }, [questions]);
+
   const submitScore = useSubmitScore();
   const getHint = useGetAiHint();
 
-  const question = questions[currentIndex];
+  const question = shuffledQuestions[currentIndex];
   const answered = selected !== null;
   const correct = answered && selected === question?.correctAnswer;
   const hintPointCost = DIFF_HINT_COST[question?.difficulty ?? "Medium"] ?? 15;
@@ -66,6 +81,7 @@ export default function Phishing() {
       {
         onSuccess: (data) => {
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
           if (data.leveledUp) {
             audioEffects.levelUp();
             toast({ title: "LEVEL UP!", description: `Now Level ${data.level}!` });
@@ -79,7 +95,7 @@ export default function Phishing() {
   }
 
   function handleNext() {
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < shuffledQuestions.length - 1) {
       setCurrentIndex(i => i + 1);
       setSelected(null);
       setHint(null);
@@ -92,6 +108,7 @@ export default function Phishing() {
   }
 
   function handleReset() {
+    setShuffledQuestions(shuffle(questions));
     setCurrentIndex(0);
     setSelected(null);
     setHint(null);
@@ -129,7 +146,7 @@ export default function Phishing() {
   }
 
   if (completed) {
-    const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
+    const accuracy = shuffledQuestions.length > 0 ? Math.round((correctCount / shuffledQuestions.length) * 100) : 0;
     return (
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-xl mx-auto text-center space-y-6 pt-8">
         <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
@@ -141,7 +158,7 @@ export default function Phishing() {
         </div>
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: "Correct", value: `${correctCount}/${questions.length}` },
+            { label: "Correct", value: `${correctCount}/${shuffledQuestions.length}` },
             { label: "Accuracy", value: `${accuracy}%` },
             { label: "Score", value: score },
           ].map(stat => (
@@ -185,7 +202,7 @@ export default function Phishing() {
           <h1 className="text-xl font-bold">Phishing Detective</h1>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="font-mono border-yellow-400/30 text-yellow-400">{currentIndex + 1} / {questions.length}</Badge>
+          <Badge variant="outline" className="font-mono border-yellow-400/30 text-yellow-400">{currentIndex + 1} / {shuffledQuestions.length}</Badge>
           <Badge variant="outline" className="font-mono text-primary">{score} pts</Badge>
           {user && <Badge variant="outline" className="font-mono text-yellow-400 border-yellow-400/30"><span className="text-[10px] mr-1">HP</span>{user.hintPoints}</Badge>}
         </div>
@@ -193,7 +210,7 @@ export default function Phishing() {
 
       {/* Progress bar */}
       <div className="h-1 bg-muted rounded-full overflow-hidden">
-        <motion.div className="h-full bg-yellow-400" animate={{ width: `${((currentIndex) / questions.length) * 100}%` }} />
+        <motion.div className="h-full bg-yellow-400" animate={{ width: `${(currentIndex / shuffledQuestions.length) * 100}%` }} />
       </div>
 
       {/* Email display */}
@@ -293,7 +310,7 @@ export default function Phishing() {
         )}
         {answered && (
           <Button onClick={handleNext} className="ml-auto gap-2 bg-primary text-primary-foreground">
-            {currentIndex < questions.length - 1 ? "Next Question" : "Complete Mission"}
+            {currentIndex < shuffledQuestions.length - 1 ? "Next Question" : "Complete Mission"}
             <ChevronRight className="w-4 h-4" />
           </Button>
         )}

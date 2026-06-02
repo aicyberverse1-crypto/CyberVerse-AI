@@ -1,10 +1,10 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and, or, isNull, lt, sql } from "drizzle-orm";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
 import { signToken, requireAuth, type AuthRequest } from "../lib/auth";
-import { serializeUser, getRankTier } from "../lib/userProfile";
+import { serializeUser } from "../lib/userProfile";
 
 const router: IRouter = Router();
 
@@ -25,12 +25,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const passwordHash = await bcrypt.hash(password, 12);
   const [user] = await db
     .insert(usersTable)
-    .values({
-      username,
-      passwordHash,
-      hackerType: hackerType ?? "defender",
-      lastLoginAt: new Date(),
-    })
+    .values({ username, passwordHash, hackerType: hackerType ?? "defender", lastLoginAt: new Date() })
     .returning();
 
   const token = signToken({ userId: user.id, username: user.username });
@@ -57,31 +52,30 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  // Handle streak logic on login
   const now = new Date();
   let streakDays = user.streakDays;
-  const lastLogin = user.lastLoginAt;
-  if (lastLogin) {
-    const diffHours = (now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60);
+  if (user.lastLoginAt) {
+    const diffHours = (now.getTime() - user.lastLoginAt.getTime()) / (1000 * 60 * 60);
     if (diffHours >= 24 && diffHours < 48) {
       streakDays = user.streakDays + 1;
     } else if (diffHours >= 48) {
       streakDays = 1;
     }
+    // < 24h: same-day re-login, streak unchanged
   } else {
     streakDays = 1;
   }
 
-  // Reset daily score if new day
-  const lastReset = user.lastDailyReset;
-  let dailyScore = user.dailyScore;
-  if (!lastReset || now.toDateString() !== lastReset.toDateString()) {
-    dailyScore = 0;
-  }
+  const isNewDay = !user.lastDailyReset || now.toDateString() !== user.lastDailyReset.toDateString();
 
   const [updatedUser] = await db
     .update(usersTable)
-    .set({ lastLoginAt: now, streakDays, dailyScore, lastDailyReset: lastReset ?? now })
+    .set({
+      lastLoginAt: now,
+      streakDays,
+      dailyScore: isNewDay ? 0 : user.dailyScore,
+      lastDailyReset: isNewDay ? now : (user.lastDailyReset ?? now),
+    })
     .where(eq(usersTable.id, user.id))
     .returning();
 
@@ -115,35 +109,51 @@ router.post("/user/hacker-type", requireAuth, async (req: AuthRequest, res): Pro
 });
 
 router.post("/user/daily-claim", requireAuth, async (req: AuthRequest, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user!.userId));
+  const userId = req.user!.userId;
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  // Read current streak to compute reward — do this before the atomic update
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   if (!user) {
     res.status(401).json({ error: "User not found" });
     return;
   }
 
-  const now = new Date();
-  if (user.lastClaimedAt) {
-    const diffHours = (now.getTime() - user.lastClaimedAt.getTime()) / (1000 * 60 * 60);
-    if (diffHours < 24) {
-      res.status(400).json({ error: "Daily bonus already claimed. Come back tomorrow!" });
-      return;
-    }
+  // Fast-path reject (avoids unnecessary UPDATE round-trip)
+  if (user.lastClaimedAt && user.lastClaimedAt.getTime() > cutoff.getTime()) {
+    res.status(400).json({ error: "Daily bonus already claimed. Come back tomorrow!" });
+    return;
   }
 
   const STREAK_REWARDS: Record<number, number> = { 1: 20, 2: 25, 3: 30, 5: 50, 7: 100 };
   const streakBonus = STREAK_REWARDS[user.streakDays] ?? 20;
-  const newHintPoints = user.hintPoints + streakBonus;
 
+  // Atomic update — the WHERE condition on lastClaimedAt prevents a second concurrent
+  // request from double-claiming (it will update 0 rows and get no result back)
   const [updated] = await db
     .update(usersTable)
-    .set({ hintPoints: newHintPoints, lastClaimedAt: now })
-    .where(eq(usersTable.id, user.id))
+    .set({
+      hintPoints: sql`${usersTable.hintPoints} + ${streakBonus}`,
+      lastClaimedAt: now,
+    })
+    .where(
+      and(
+        eq(usersTable.id, userId),
+        or(isNull(usersTable.lastClaimedAt), lt(usersTable.lastClaimedAt, cutoff))
+      )
+    )
     .returning();
+
+  if (!updated) {
+    res.status(400).json({ error: "Daily bonus already claimed. Come back tomorrow!" });
+    return;
+  }
 
   res.json({
     hintPointsEarned: streakBonus,
     streakDays: updated.streakDays,
-    totalHintPoints: newHintPoints,
+    totalHintPoints: updated.hintPoints,
     message: user.streakDays >= 7
       ? "🔥 7-Day Streak! Legendary bonus claimed!"
       : `Day ${user.streakDays} streak bonus claimed!`,

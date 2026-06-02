@@ -47,6 +47,16 @@ export default function Builder() {
   const strength = checkStrength(password);
   const strengthPercent = (strength.score / 8) * 100;
 
+  function handlePasswordChange(val: string) {
+    setPassword(val);
+    // Clear previous simulation results when the password changes
+    if (submitted) {
+      setSubmitted(false);
+      setHackResult(null);
+      setAiAnalysis(null);
+    }
+  }
+
   function simulateHack() {
     if (!password) {
       audioEffects.error();
@@ -75,6 +85,7 @@ export default function Builder() {
       {
         onSuccess: (data) => {
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/stats/dashboard"] });
           if (data.leveledUp) {
             audioEffects.levelUp();
             toast({ title: "LEVEL UP!", description: `Now Level ${data.level}!` });
@@ -130,7 +141,7 @@ export default function Builder() {
               <Input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); setSubmitted(false); setHackResult(null); }}
+                onChange={(e) => handlePasswordChange(e.target.value)}
                 placeholder="Enter your password..."
                 className="bg-background/50 border-muted font-mono pr-10"
                 disabled={submitted}
@@ -233,6 +244,15 @@ export default function Builder() {
                 </div>
               </CardContent>
             </Card>
+
+            {sendChat.isPending && !aiAnalysis && (
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <Bot className="w-4 h-4 text-primary animate-pulse" />
+                  <p className="text-sm text-muted-foreground animate-pulse">CyberGuard is analyzing your setup…</p>
+                </CardContent>
+              </Card>
+            )}
 
             {aiAnalysis && (
               <Card className="bg-card border-border">

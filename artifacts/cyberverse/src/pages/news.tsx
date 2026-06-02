@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Newspaper, AlertTriangle, Shield, Bot, ChevronDown,
-  Lock, Globe, Eye, Zap, RefreshCw, Clock
+  Lock, Globe, Eye, Zap, RefreshCw, Clock, WifiOff
 } from "lucide-react";
 import { useSendAiChatMessage } from "@workspace/api-client-react";
 import { getToken } from "@/lib/auth";
@@ -113,6 +113,7 @@ export default function News() {
   const [loadingId, setLoadingId]     = useState<number | null>(null);
   const [news, setNews]               = useState<NewsItem[]>(FALLBACK);
   const [fetching, setFetching]       = useState(false);
+  const [fetchError, setFetchError]   = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [usingAI, setUsingAI]         = useState(false);
   const sendChat                      = useSendAiChatMessage();
@@ -121,6 +122,7 @@ export default function News() {
     const token = getToken();
     if (!token) return;
     setFetching(true);
+    setFetchError(false);
     try {
       if (forceRefresh) {
         await fetch("/api/ai/news/refresh", {
@@ -131,8 +133,17 @@ export default function News() {
       const res = await fetch("/api/ai/news", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("fetch failed");
-      const data = await res.json();
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({})) as { useFallback?: boolean };
+        // AI service down — stay on fallback data but inform the user
+        if (json.useFallback || res.status === 503) {
+          setFetchError(true);
+        }
+        return;
+      }
+
+      const data = await res.json() as { items: NewsItem[]; generatedAt: number };
       if (Array.isArray(data.items) && data.items.length > 0) {
         setNews(data.items as NewsItem[]);
         setLastUpdated(new Date(data.generatedAt));
@@ -140,7 +151,7 @@ export default function News() {
         audioEffects.success();
       }
     } catch {
-      // Keep fallback data silently
+      setFetchError(true);
     } finally {
       setFetching(false);
     }
@@ -162,7 +173,10 @@ export default function News() {
           setLoadingId(null);
           audioEffects.success();
         },
-        onError: () => setLoadingId(null),
+        onError: () => {
+          setLoadingId(null);
+          setAiExplanations(prev => ({ ...prev, [item.id]: "AI explanation unavailable right now. Please try again in a moment." }));
+        },
       }
     );
   }
@@ -198,11 +212,26 @@ export default function News() {
             {fetching ? "Refreshing…" : "Refresh Feed"}
           </Button>
           <div className="flex items-center gap-1.5">
-            <div className={`w-2 h-2 rounded-full ${usingAI ? "bg-primary" : "bg-red-400"} animate-pulse`} />
-            <span className="text-xs font-mono text-muted-foreground">{usingAI ? "AI LIVE" : "STATIC"}</span>
+            <div className={`w-2 h-2 rounded-full ${usingAI ? "bg-primary" : fetchError ? "bg-yellow-400" : "bg-red-400"} animate-pulse`} />
+            <span className="text-xs font-mono text-muted-foreground">{usingAI ? "AI LIVE" : fetchError ? "AI DOWN" : "STATIC"}</span>
           </div>
         </div>
       </div>
+
+      {/* AI service error notice */}
+      {fetchError && !usingAI && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="bg-yellow-400/5 border-yellow-400/30">
+            <CardContent className="p-3 flex items-center gap-3">
+              <WifiOff className="w-4 h-4 text-yellow-400 shrink-0" />
+              <p className="text-xs text-yellow-400">
+                AI news feed is temporarily unavailable. Showing curated threat intelligence.
+                <button onClick={() => fetchNews(true)} className="ml-2 underline hover:no-underline">Retry</button>
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Loading skeleton */}
       {fetching && !usingAI && (

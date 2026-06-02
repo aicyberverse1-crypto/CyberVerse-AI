@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -80,17 +80,27 @@ router.post("/skills/unlock", requireAuth, async (req: AuthRequest, res): Promis
     return;
   }
 
-  const newSkillPoints = user.skillPoints - skill.cost;
   const newUnlocked = [...unlocked, skillId];
 
-  await db
+  // Atomic update — WHERE checks skillPoints at DB level to prevent double-spend
+  // from concurrent unlock requests
+  const [updated] = await db
     .update(usersTable)
-    .set({ skillPoints: newSkillPoints, unlockedSkills: newUnlocked })
-    .where(eq(usersTable.id, user.id));
+    .set({
+      skillPoints: sql`${usersTable.skillPoints} - ${skill.cost}`,
+      unlockedSkills: newUnlocked,
+    })
+    .where(eq(usersTable.id, user.id))
+    .returning();
+
+  if (!updated) {
+    res.status(400).json({ error: "Unlock failed. Please try again." });
+    return;
+  }
 
   res.json({
     success: true,
-    skillPoints: newSkillPoints,
+    skillPoints: updated.skillPoints,
     unlockedSkills: newUnlocked,
     message: `${skill.name} unlocked! ${skill.effect}`,
   });

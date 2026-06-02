@@ -22,6 +22,20 @@ router.post("/missions/generate", requireAuth, async (req: AuthRequest, res): Pr
     user.accuracyRate >= 60 ? "Hard" :
     user.accuracyRate >= 40 ? "Medium" : "Easy";
 
+  const fallbackMission = {
+    title: "System Breach Response",
+    scenario: "A critical server has been compromised. Analyze the attack vectors and secure the system before sensitive data is exfiltrated.",
+    difficulty: difficultyLevel,
+    objectives: [
+      { text: "Identify the intrusion vector", xpReward: 20 },
+      { text: "Isolate affected systems", xpReward: 30 },
+      { text: "Deploy countermeasures", xpReward: 50 },
+    ],
+    hints: ["Check recent login attempts", "Review firewall logs"],
+    rewards: { xp: 100, score: 200, hintPoints: 25 },
+    hackerType: user.hackerType,
+  };
+
   const prompt = `You are generating a custom cybersecurity training mission for a ${user.hackerType} (${user.hackerType === "defender" ? "Blue Team" : "Red Team"}).
 
 Player Profile:
@@ -48,37 +62,29 @@ Generate a realistic and immersive cybersecurity mission. Respond ONLY with vali
 
 For ${user.hackerType === "defender" ? "Defender missions focus on: securing systems, detecting threats, fixing vulnerabilities, incident response" : "Attacker missions focus on: exploiting systems, cracking security, penetration testing, simulating attacks"}.`;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    max_completion_tokens: 600,
-    messages: [
-      { role: "system", content: "You are a cybersecurity training system that generates realistic missions. Always respond with valid JSON only, no extra text." },
-      { role: "user", content: prompt },
-    ],
-  });
-
-  const content = completion.choices[0]?.message?.content ?? "{}";
-  
-  let mission;
   try {
-    mission = JSON.parse(content);
-  } catch {
-    mission = {
-      title: "System Breach Response",
-      scenario: "A critical server has been compromised. Analyze the attack vectors and secure the system.",
-      difficulty: difficultyLevel,
-      objectives: [
-        { text: "Identify the intrusion vector", xpReward: 20 },
-        { text: "Isolate affected systems", xpReward: 30 },
-        { text: "Deploy countermeasures", xpReward: 50 },
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      max_completion_tokens: 600,
+      messages: [
+        { role: "system", content: "You are a cybersecurity training system that generates realistic missions. Always respond with valid JSON only, no extra text." },
+        { role: "user", content: prompt },
       ],
-      hints: ["Check recent login attempts", "Review firewall logs"],
-      rewards: { xp: 100, score: 200, hintPoints: 25 },
-      hackerType: user.hackerType,
-    };
-  }
+    });
 
-  res.json(mission);
+    const content = completion.choices[0]?.message?.content ?? "{}";
+    let mission;
+    try {
+      mission = JSON.parse(content);
+    } catch {
+      mission = fallbackMission;
+    }
+
+    res.json(mission);
+  } catch {
+    // AI unavailable — return a sensible fallback so the UI doesn't break
+    res.json(fallbackMission);
+  }
 });
 
 export default router;
