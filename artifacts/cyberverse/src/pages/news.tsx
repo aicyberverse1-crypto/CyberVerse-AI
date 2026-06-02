@@ -1,131 +1,164 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Newspaper, AlertTriangle, Shield, Bot, ChevronDown, ExternalLink, Zap, Lock, Globe, Eye } from "lucide-react";
+import {
+  Newspaper, AlertTriangle, Shield, Bot, ChevronDown,
+  Lock, Globe, Eye, Zap, RefreshCw, Clock
+} from "lucide-react";
 import { useSendAiChatMessage } from "@workspace/api-client-react";
+import { getToken } from "@/lib/auth";
 import { audioEffects } from "@/hooks/useAudio";
 
-// Cyber news memory: shown inline per article
-const MOCK_NEWS = [
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface NewsItem {
+  id: number;
+  title: string;
+  source: string;
+  category: string;
+  severity: "CRITICAL" | "HIGH" | "MEDIUM";
+  summary: string;
+  impact: string;
+  lesson: string;
+  tips: string[];
+  color: string;
+}
+
+// ─── Icon + colour helpers ────────────────────────────────────────────────────
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  "text-red-400":    AlertTriangle,
+  "text-orange-400": Shield,
+  "text-yellow-400": Globe,
+  "text-primary":    Eye,
+  "text-blue-400":   Lock,
+  "text-purple-400": Zap,
+};
+
+const SEVERITY_COLORS: Record<string, string> = {
+  CRITICAL: "bg-red-400/20 text-red-400 border-red-400/30",
+  HIGH:     "bg-orange-400/20 text-orange-400 border-orange-400/30",
+  MEDIUM:   "bg-yellow-400/20 text-yellow-400 border-yellow-400/30",
+};
+
+const CATEGORIES = ["All", "Breach", "Malware", "Vulnerability", "Phishing", "Supply Chain", "Critical Infrastructure"];
+
+// ─── Fallback data (shown while AI loads or on error) ────────────────────────
+
+const FALLBACK: NewsItem[] = [
   {
-    id: 1,
-    title: "Massive Healthcare Data Breach Exposes 23 Million Patient Records",
-    source: "CyberWatch Daily",
-    date: "May 3, 2026",
-    category: "Breach",
-    severity: "CRITICAL",
-    summary: "A ransomware group breached the largest US healthcare network, exfiltrating PII, medical records, and insurance data. The attack vector was an unpatched VPN appliance.",
+    id: 1, title: "Massive Healthcare Data Breach Exposes 23M Records",
+    source: "CyberWatch Daily", category: "Breach", severity: "CRITICAL",
+    summary: "A ransomware group breached the largest US healthcare network via an unpatched VPN appliance, exfiltrating PII and medical records.",
     impact: "23M patients affected across 47 states",
-    lesson: "Patch management is not optional — a single unpatched VPN gateway led to a $340M breach. Healthcare is the #1 most targeted sector.",
-    tips: ["Audit all internet-facing appliances monthly", "Implement network segmentation for medical systems", "Assume breach — deploy endpoint detection on all devices"],
-    icon: Lock,
+    lesson: "Patch management is not optional — a single unpatched gateway led to a $340M breach.",
+    tips: ["Audit all internet-facing appliances monthly", "Implement network segmentation", "Deploy endpoint detection on all devices"],
     color: "text-red-400",
-    bg: "border-red-400/20 bg-red-400/5",
   },
   {
-    id: 2,
-    title: "New Ransomware 'BlackMamba' Uses AI to Rewrite Its Own Code",
-    source: "ThreatPost",
-    date: "May 2, 2026",
-    category: "Malware",
-    severity: "HIGH",
-    summary: "BlackMamba is a polymorphic ransomware that uses a local LLM to regenerate its code on each infection, evading signature-based detection entirely.",
+    id: 2, title: "AI-Powered Ransomware 'BlackMamba' Rewrites Its Own Code",
+    source: "ThreatPost", category: "Malware", severity: "HIGH",
+    summary: "BlackMamba uses a local LLM to regenerate its payload on each infection, evading all signature-based detection.",
     impact: "500+ companies hit across 30 countries",
-    lesson: "Signature-based antivirus is losing the war. AI-powered malware can mutate in real-time. Behavioral detection and zero-trust architecture are now essential.",
-    tips: ["Deploy EDR (Endpoint Detection & Response) tools", "Behavioral analytics catch what signatures miss", "Network segmentation limits ransomware spread"],
-    icon: AlertTriangle,
+    lesson: "Behavioral detection and zero-trust architecture are now essential.",
+    tips: ["Deploy EDR tools", "Behavioral analytics catch what signatures miss", "Segment your network to limit spread"],
     color: "text-orange-400",
-    bg: "border-orange-400/20 bg-orange-400/5",
   },
   {
-    id: 3,
-    title: "State-Sponsored Hackers Exploit Chrome Zero-Day in Spear Phishing Campaign",
-    source: "Google Threat Intelligence",
-    date: "May 1, 2026",
-    category: "Vulnerability",
-    severity: "CRITICAL",
-    summary: "A nation-state APT group exploited a zero-day in Chrome's V8 engine to deliver spyware via malicious PDF links sent to government officials.",
+    id: 3, title: "State-Sponsored APT Exploits Chrome Zero-Day",
+    source: "Google Threat Intelligence", category: "Vulnerability", severity: "CRITICAL",
+    summary: "A nation-state group exploited a V8 engine zero-day to deliver spyware via malicious PDF links sent to government officials.",
     impact: "Active exploitation in 12 countries",
-    lesson: "Zero-days are often delivered via phishing. Even fully patched browsers can have unknown vulnerabilities. Defense-in-depth and user awareness are your best protection.",
-    tips: ["Enable Chrome auto-updates", "Treat unsolicited links with extreme caution", "Use browser isolation for high-value targets"],
-    icon: Globe,
+    lesson: "Zero-days are often delivered via phishing. Defense-in-depth is your best protection.",
+    tips: ["Enable Chrome auto-updates", "Treat unsolicited links with caution", "Use browser isolation for high-value targets"],
     color: "text-yellow-400",
-    bg: "border-yellow-400/20 bg-yellow-400/5",
   },
   {
-    id: 4,
-    title: "FBI Warning: QR Code Phishing (Quishing) Up 400% in 2026",
-    source: "FBI Cyber Division",
-    date: "Apr 30, 2026",
-    category: "Phishing",
-    severity: "HIGH",
-    summary: "QR codes in emails, flyers, and physical spaces are increasingly used to bypass email filters and deliver phishing pages. Attackers replace legitimate QR codes in parking lots and cafes.",
+    id: 4, title: "FBI Warning: QR Code Phishing Up 400% in 2026",
+    source: "FBI Cyber Division", category: "Phishing", severity: "HIGH",
+    summary: "QR codes are increasingly used to bypass email filters. Attackers replace legitimate QR codes in public spaces.",
     impact: "Estimated $1.2B losses in Q1 2026",
-    lesson: "QR codes are the new phishing link. Users trained to hover over links have no equivalent reflex for QR codes. Always check the URL after scanning before entering credentials.",
-    tips: ["Verify QR code destinations before acting", "Never scan QR codes in unexpected emails", "Use a QR scanner that previews the URL"],
-    icon: Eye,
+    lesson: "Always verify the URL destination after scanning a QR code before entering any credentials.",
+    tips: ["Verify QR destinations before acting", "Never scan QR codes in unexpected emails", "Use a scanner that previews the URL"],
     color: "text-primary",
-    bg: "border-primary/20 bg-primary/5",
   },
   {
-    id: 5,
-    title: "Critical Supply Chain Attack Targets 1,200 npm Packages",
-    source: "Snyk Security",
-    date: "Apr 29, 2026",
-    category: "Supply Chain",
-    severity: "HIGH",
-    summary: "Attackers compromised maintainer accounts via credential stuffing to inject malicious code into popular npm packages, stealing environment variables and secrets from CI/CD pipelines.",
+    id: 5, title: "Supply Chain Attack Targets 1,200 npm Packages",
+    source: "Snyk Security", category: "Supply Chain", severity: "HIGH",
+    summary: "Attackers compromised maintainer accounts via credential stuffing to inject malicious code into popular npm packages.",
     impact: "1,200 packages, millions of downloads",
-    lesson: "Open-source dependencies are an attack surface. Unpinned packages can be silently backdoored. Enable MFA for package registry accounts and pin dependency versions.",
-    tips: ["Pin dependency versions (lock files)", "Enable MFA on npm/PyPI accounts", "Run dependency audits in CI/CD pipeline"],
-    icon: Shield,
+    lesson: "Enable MFA on all package registry accounts and pin dependency versions.",
+    tips: ["Pin dependency versions", "Enable MFA on npm accounts", "Run dependency audits in CI/CD"],
     color: "text-blue-400",
-    bg: "border-blue-400/20 bg-blue-400/5",
   },
   {
-    id: 6,
-    title: "Water Treatment Facility Hack: Attacker Changes Chemical Levels Remotely",
-    source: "ICS-CERT",
-    date: "Apr 27, 2026",
-    category: "Critical Infrastructure",
-    severity: "CRITICAL",
-    summary: "An attacker used default credentials on a remote access system to access a water treatment plant SCADA system, attempting to increase sodium hydroxide levels to dangerous concentrations.",
+    id: 6, title: "Water Treatment Facility Hack Changes Chemical Levels",
+    source: "ICS-CERT", category: "Critical Infrastructure", severity: "CRITICAL",
+    summary: "An attacker used default credentials on a remote access system to modify sodium hydroxide levels in a water treatment SCADA system.",
     impact: "100,000 residents at risk before detection",
-    lesson: "OT/ICS systems (power grids, water treatment, hospitals) are increasingly targeted by nation-states. Default credentials are a systemic problem. Air-gapping critical control systems is now a necessity.",
-    tips: ["Change ALL default credentials on ICS/SCADA systems", "Air-gap critical infrastructure control networks", "Implement anomaly detection on control system traffic"],
-    icon: Zap,
+    lesson: "Air-gap critical OT/ICS control networks from internet-accessible systems.",
+    tips: ["Change ALL default credentials on ICS systems", "Air-gap critical infrastructure networks", "Implement anomaly detection on control traffic"],
     color: "text-purple-400",
-    bg: "border-purple-400/20 bg-purple-400/5",
   },
 ];
 
-const CATEGORIES = ["All", "Breach", "Malware", "Vulnerability", "Phishing", "Supply Chain", "Critical Infrastructure"];
-const SEVERITY_COLORS: Record<string, string> = {
-  CRITICAL: "bg-red-400/20 text-red-400 border-red-400/30",
-  HIGH: "bg-orange-400/20 text-orange-400 border-orange-400/30",
-  MEDIUM: "bg-yellow-400/20 text-yellow-400 border-yellow-400/30",
-};
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function News() {
-  const [filter, setFilter] = useState("All");
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [filter, setFilter]           = useState("All");
+  const [expanded, setExpanded]       = useState<number | null>(null);
   const [aiExplanations, setAiExplanations] = useState<Record<number, string>>({});
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-  const sendChat = useSendAiChatMessage();
+  const [loadingId, setLoadingId]     = useState<number | null>(null);
+  const [news, setNews]               = useState<NewsItem[]>(FALLBACK);
+  const [fetching, setFetching]       = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [usingAI, setUsingAI]         = useState(false);
+  const sendChat                      = useSendAiChatMessage();
 
-  const filtered = filter === "All" ? MOCK_NEWS : MOCK_NEWS.filter(n => n.category === filter);
+  const fetchNews = useCallback(async (forceRefresh = false) => {
+    const token = getToken();
+    if (!token) return;
+    setFetching(true);
+    try {
+      if (forceRefresh) {
+        await fetch("/api/ai/news/refresh", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+      const res = await fetch("/api/ai/news", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("fetch failed");
+      const data = await res.json();
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        setNews(data.items as NewsItem[]);
+        setLastUpdated(new Date(data.generatedAt));
+        setUsingAI(true);
+        audioEffects.success();
+      }
+    } catch {
+      // Keep fallback data silently
+    } finally {
+      setFetching(false);
+    }
+  }, []);
 
-  async function getAiExplanation(news: typeof MOCK_NEWS[0]) {
-    if (aiExplanations[news.id]) return;
-    setLoadingId(news.id);
+  useEffect(() => { fetchNews(); }, [fetchNews]);
+
+  const filtered = filter === "All" ? news : news.filter(n => n.category === filter);
+
+  async function getAiExplanation(item: NewsItem) {
+    if (aiExplanations[item.id]) return;
+    setLoadingId(item.id);
     audioEffects.typing();
     sendChat.mutate(
-      { data: { message: `Explain this cybersecurity incident in simple terms for a beginner student: "${news.title}". ${news.summary} What should ordinary people and companies learn from this? Keep it concise and practical (3-4 sentences).` } },
+      { data: { message: `Explain this cybersecurity incident in simple terms for a beginner: "${item.title}". ${item.summary} What should ordinary people and companies learn? Keep it to 3-4 concise sentences.` } },
       {
         onSuccess: (data) => {
-          setAiExplanations(prev => ({ ...prev, [news.id]: data.response }));
+          setAiExplanations(prev => ({ ...prev, [item.id]: data.response }));
           setLoadingId(null);
           audioEffects.success();
         },
@@ -142,14 +175,43 @@ export default function News() {
           <Newspaper className="w-5 h-5 text-primary" />
           <div>
             <h1 className="text-xl font-bold">Cyber Threat Intelligence Feed</h1>
-            <p className="text-xs text-muted-foreground font-mono">Live threats · AI-explained · Real-world impact</p>
+            <p className="text-xs text-muted-foreground font-mono">
+              {usingAI ? "AI-generated · updates every 15 min" : "Curated intel · AI-explained · Real-world impact"}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-          <span className="text-xs font-mono text-muted-foreground">LIVE FEED</span>
+        <div className="flex items-center gap-3">
+          {lastUpdated && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono">
+              <Clock className="w-3 h-3" />
+              {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </div>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1.5"
+            disabled={fetching}
+            onClick={() => fetchNews(true)}
+          >
+            <RefreshCw className={`w-3 h-3 ${fetching ? "animate-spin" : ""}`} />
+            {fetching ? "Refreshing…" : "Refresh Feed"}
+          </Button>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${usingAI ? "bg-primary" : "bg-red-400"} animate-pulse`} />
+            <span className="text-xs font-mono text-muted-foreground">{usingAI ? "AI LIVE" : "STATIC"}</span>
+          </div>
         </div>
       </div>
+
+      {/* Loading skeleton */}
+      {fetching && !usingAI && (
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 rounded-xl border border-border bg-muted/20 animate-pulse" />
+          ))}
+        </div>
+      )}
 
       {/* Category filter */}
       <div className="flex gap-2 flex-wrap">
@@ -158,7 +220,9 @@ export default function News() {
             key={cat}
             onClick={() => setFilter(cat)}
             className={`text-xs px-3 py-1.5 rounded-full border font-mono transition-all ${
-              filter === cat ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40"
+              filter === cat
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-primary/40"
             }`}
           >
             {cat}
@@ -169,46 +233,49 @@ export default function News() {
       {/* News items */}
       <div className="space-y-4">
         {filtered.map((item, i) => {
-          const Icon = item.icon;
+          const IconComponent = ICON_MAP[item.color] ?? Shield;
           const isOpen = expanded === item.id;
+          const bgClass = item.color.replace("text-", "border-").replace("-400", "-400/20") + " " +
+                          item.color.replace("text-", "bg-").replace("-400", "-400/5");
+
           return (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07 }}
+              transition={{ delay: i * 0.06 }}
             >
-              <Card className={`border transition-all ${item.bg}`}>
+              <Card className={`border transition-all ${bgClass}`}>
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-black/30 flex items-center justify-center shrink-0">
-                      <Icon className={`w-5 h-5 ${item.color}`} />
+                      <IconComponent className={`w-5 h-5 ${item.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2 flex-wrap mb-1">
                         <h3 className="text-sm font-bold text-foreground leading-snug">{item.title}</h3>
-                        <Badge className={`text-[10px] shrink-0 ${SEVERITY_COLORS[item.severity]}`}>{item.severity}</Badge>
+                        <Badge className={`text-[10px] shrink-0 ${SEVERITY_COLORS[item.severity] ?? SEVERITY_COLORS.MEDIUM}`}>
+                          {item.severity}
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground mb-2">
                         <span>{item.source}</span>
                         <span>·</span>
-                        <span>{item.date}</span>
-                        <span>·</span>
                         <span className={item.color}>{item.category}</span>
+                        {usingAI && <span>· <span className="text-primary">AI</span></span>}
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">{item.summary}</p>
                       <p className="text-xs text-orange-400 font-semibold mt-1.5">{item.impact}</p>
                     </div>
                   </div>
 
-                  {/* Expanded detail */}
                   <AnimatePresence>
                     {isOpen && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 space-y-4 border-t border-current/20 pt-4"
+                        className="mt-4 space-y-4 border-t border-current/20 pt-4 overflow-hidden"
                       >
                         {/* Lesson */}
                         <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
@@ -218,12 +285,12 @@ export default function News() {
                           <p className="text-xs text-foreground/80 leading-relaxed">{item.lesson}</p>
                         </div>
 
-                        {/* Action tips */}
+                        {/* Tips */}
                         <div>
                           <p className="text-xs font-bold text-foreground mb-2">Defensive Actions:</p>
                           <div className="space-y-1">
-                            {item.tips.map(tip => (
-                              <div key={tip} className="flex items-start gap-2 text-xs text-muted-foreground">
+                            {(item.tips ?? []).map((tip, ti) => (
+                              <div key={ti} className="flex items-start gap-2 text-xs text-muted-foreground">
                                 <span className="text-primary mt-0.5">▸</span>
                                 {tip}
                               </div>
@@ -244,11 +311,9 @@ export default function News() {
                                 disabled={loadingId === item.id}
                                 className="h-6 text-[10px] px-2 gap-1"
                               >
-                                {loadingId === item.id ? (
-                                  <span className="animate-pulse">Thinking...</span>
-                                ) : (
-                                  <><Bot className="w-3 h-3" /> Ask AI</>
-                                )}
+                                {loadingId === item.id
+                                  ? <span className="animate-pulse">Thinking…</span>
+                                  : <><Bot className="w-3 h-3" /> Ask AI</>}
                               </Button>
                             )}
                           </div>

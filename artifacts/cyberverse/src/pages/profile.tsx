@@ -46,7 +46,7 @@ export default function Profile() {
   const accuracy = stats?.accuracyRate ?? 0;
   const streakDays = user?.streakDays ?? 0;
   const winStreak = user?.winStreak ?? 0;
-  const badges = user?.badges ?? [];
+  const badges = (user?.badges ?? []) as import("@/components/BadgeDisplay").BadgeKey[];
 
   // Analyze weak areas from mode scores
   const modeScores = [
@@ -194,7 +194,7 @@ export default function Profile() {
             <CardContent className="pb-4">
               <div className="grid grid-cols-2 gap-3">
                 {ALL_BADGES.map(([badgeId, def]) => {
-                  const unlocked = badges.includes(badgeId);
+                  const unlocked = badges.includes(badgeId as import("@/components/BadgeDisplay").BadgeKey);
                   return (
                     <motion.div
                       key={badgeId}

@@ -3,13 +3,14 @@ import { ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard, Mail, Shield, Lock, Bot, Trophy, LogOut, Activity,
-  TreePine, Swords, Users, Lightbulb, Globe, Zap, Newspaper, Award, User
+  TreePine, Swords, Users, Lightbulb, Globe, Zap, Newspaper, Award, User,
+  Terminal, BookOpen
 } from "lucide-react";
 import { useGetUser } from "@workspace/api-client-react";
 import { removeToken } from "@/lib/auth";
 import AiChatWidget from "@/components/AiChatWidget";
 import { Badge } from "@/components/ui/badge";
-import { BadgeDisplay, StreakTitle } from "@/components/BadgeDisplay";
+import { BadgeDisplay, StreakTitle, type BadgeKey } from "@/components/BadgeDisplay";
 
 const NAV_ITEMS = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, group: "main" },
@@ -19,6 +20,8 @@ const NAV_ITEMS = [
   { path: "/escape", label: "Escape Room", icon: Activity, group: "play" },
   { path: "/multiplayer", label: "Multiplayer", icon: Users, group: "play" },
   { path: "/missions", label: "AI Missions", icon: Swords, group: "play" },
+  { path: "/story", label: "Story Mode", icon: BookOpen, group: "play", badge: "NEW" },
+  { path: "/terminal", label: "Hacker Terminal", icon: Terminal, group: "play", badge: "NEW" },
   { path: "/dark-web", label: "Dark Web Intel", icon: Globe, group: "intel" },
   { path: "/news", label: "Threat Intel Feed", icon: Newspaper, group: "intel", badge: "LIVE" },
   { path: "/skill-tree", label: "Skill Tree", icon: TreePine, group: "progress" },
@@ -127,7 +130,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             {/* Badges */}
             {user.badges && user.badges.length > 0 && (
               <div className="mt-2">
-                <BadgeDisplay badges={user.badges} size="sm" animate={false} />
+                <BadgeDisplay badges={user.badges as BadgeKey[]} size="sm" animate={false} />
               </div>
             )}
           </div>

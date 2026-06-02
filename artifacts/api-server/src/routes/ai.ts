@@ -140,4 +140,60 @@ Keep responses concise (3-5 sentences), educational, and practical. Use concrete
   res.json({ response });
 });
 
+// Cached news to avoid hammering the AI on every page load
+let newsCache: { items: unknown[]; generatedAt: number } | null = null;
+const NEWS_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+router.get("/ai/news", requireAuth, async (_req, res): Promise<void> => {
+  const now = Date.now();
+  if (newsCache && now - newsCache.generatedAt < NEWS_TTL_MS) {
+    res.json({ items: newsCache.items, cached: true, generatedAt: newsCache.generatedAt });
+    return;
+  }
+
+  const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    max_completion_tokens: 1800,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `You are a cybersecurity threat intelligence analyst. Generate a JSON object with a field "items" containing an array of exactly 6 realistic, educational cybersecurity news items for ${today}. Each item must have these exact fields:
+{
+  "id": number (1-6),
+  "title": string (realistic threat headline),
+  "source": string (realistic source like "CISA Advisory", "Krebs on Security", "ThreatPost", "Google Project Zero", etc.),
+  "category": string (one of: "Breach", "Malware", "Vulnerability", "Phishing", "Supply Chain", "Critical Infrastructure"),
+  "severity": string (one of: "CRITICAL", "HIGH", "MEDIUM"),
+  "summary": string (2-3 sentences describing the incident),
+  "impact": string (brief impact stat or scope),
+  "lesson": string (1-2 sentences of what defenders should learn),
+  "tips": array of 3 strings (actionable defensive tips),
+  "color": string (one of: "text-red-400", "text-orange-400", "text-yellow-400", "text-primary", "text-blue-400", "text-purple-400")
+}
+Make each story feel current, realistic, and educational. Vary severity levels and categories.`,
+      },
+      { role: "user", content: "Generate today's cyber threat intelligence feed." },
+    ],
+  });
+
+  const raw = completion.choices[0]?.message?.content ?? '{"items":[]}';
+  let parsed: { items: unknown[] };
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    parsed = { items: [] };
+  }
+
+  newsCache = { items: parsed.items ?? [], generatedAt: now };
+  res.json({ items: newsCache.items, cached: false, generatedAt: now });
+});
+
+router.post("/ai/news/refresh", requireAuth, async (_req, res): Promise<void> => {
+  newsCache = null;
+  res.json({ ok: true });
+});
+
 export default router;

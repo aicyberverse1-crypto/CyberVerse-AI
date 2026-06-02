@@ -161,7 +161,7 @@ export default function Dashboard() {
 
   const rankColorClass = RANK_COLORS[rankTier] ?? "text-amber-600 border-amber-600/30";
   const streakDays = user?.streakDays ?? 0;
-  const badges = user?.badges ?? [];
+  const badges = (user?.badges ?? []) as import("@/components/BadgeDisplay").BadgeKey[];
   const isOnFire = streakDays >= 5;
   const isUnstoppable = streakDays >= 10;
 

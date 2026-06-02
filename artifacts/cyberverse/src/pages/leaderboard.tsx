@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Zap, Target, TrendingUp, Shield, Swords, Crown, RefreshCw, ArrowUp, ArrowDown } from "lucide-react";
-import { BadgeDisplay, StreakTitle } from "@/components/BadgeDisplay";
+import { BadgeDisplay, StreakTitle, type BadgeKey } from "@/components/BadgeDisplay";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 const RANK_COLORS: Record<string, string> = {
@@ -182,7 +182,7 @@ export default function Leaderboard() {
                       {top3[1].isTopHacker && <div className="text-[10px] text-yellow-400">👑 Top Hacker</div>}
                       {top3[1].badges.length > 0 && (
                         <div className="flex justify-center mt-1.5">
-                          <BadgeDisplay badges={top3[1].badges} size="sm" animate={false} />
+                          <BadgeDisplay badges={top3[1].badges as BadgeKey[]} size="sm" animate={false} />
                         </div>
                       )}
                     </CardContent>
@@ -217,7 +217,7 @@ export default function Leaderboard() {
                       {top3[0].isTopHacker && <div className="text-[10px] text-yellow-400">👑 Top Hacker</div>}
                       {top3[0].badges.length > 0 && (
                         <div className="flex justify-center mt-1.5">
-                          <BadgeDisplay badges={top3[0].badges} size="sm" animate={false} />
+                          <BadgeDisplay badges={top3[0].badges as BadgeKey[]} size="sm" animate={false} />
                         </div>
                       )}
                     </CardContent>
@@ -251,7 +251,7 @@ export default function Leaderboard() {
                       {top3[2].isTopHacker && <div className="text-[10px] text-yellow-400">👑 Top Hacker</div>}
                       {top3[2].badges.length > 0 && (
                         <div className="flex justify-center mt-1.5">
-                          <BadgeDisplay badges={top3[2].badges} size="sm" animate={false} />
+                          <BadgeDisplay badges={top3[2].badges as BadgeKey[]} size="sm" animate={false} />
                         </div>
                       )}
                     </CardContent>
@@ -333,7 +333,7 @@ export default function Leaderboard() {
                       }
                     </div>
                     <div className="col-span-2">
-                      <BadgeDisplay badges={entry.badges} size="sm" animate={false} />
+                      <BadgeDisplay badges={entry.badges as BadgeKey[]} size="sm" animate={false} />
                     </div>
                     <div className="col-span-2 text-right font-mono font-semibold text-xs text-foreground">
                       {entry.totalScore.toLocaleString()}

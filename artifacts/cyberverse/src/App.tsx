@@ -21,6 +21,8 @@ import News from "@/pages/news";
 import Certificate from "@/pages/certificate";
 import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
+import Terminal from "@/pages/terminal";
+import Story from "@/pages/story";
 import AppLayout from "@/components/layout/AppLayout";
 import { useEffect } from "react";
 import { getToken } from "@/lib/auth";
@@ -65,6 +67,8 @@ function Router() {
       <Route path="/news" component={() => <ProtectedRoute component={News} />} />
       <Route path="/certificate" component={() => <ProtectedRoute component={Certificate} />} />
       <Route path="/profile" component={() => <ProtectedRoute component={Profile} />} />
+      <Route path="/terminal" component={() => <ProtectedRoute component={Terminal} />} />
+      <Route path="/story" component={() => <ProtectedRoute component={Story} />} />
       <Route path="/admin" component={Admin} />
 
       <Route component={NotFound} />
