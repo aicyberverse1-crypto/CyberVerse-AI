@@ -69,7 +69,7 @@
 :root {
   /* Enforce dark theme as default */
   color-scheme: dark;
-  
+
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
 
@@ -78,46 +78,51 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Deep dark slate background */
-  --background: 222 47% 6%;
-  --foreground: 210 40% 98%;
+  /* MODIFIED: Deep, rich emerald green instead of black or gray */
+  --background: 145 45% 10%;
+  --foreground: 145 20% 96%;
 
-  --border: 217 32% 17%;
-  --card: 222 47% 8%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 217 32% 17%;
+  /* MODIFIED: Vibrant dark green border */
+  --border: 145 35% 20%;
 
-  --sidebar: 222 47% 8%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 217 32% 17%;
+  /* MODIFIED: Elevated lighter forest green for cards */
+  --card: 145 40% 14%;
+  --card-foreground: 145 20% 96%;
+  --card-border: 145 35% 22%;
+
+  /* MODIFIED: Sidebar updated to match the green-tinted card tones */
+  --sidebar: 145 40% 14%;
+  --sidebar-foreground: 145 20% 96%;
+  --sidebar-border: 145 35% 22%;
   --sidebar-primary: 158 82% 43%; /* Neon Green */
-  --sidebar-primary-foreground: 0 0% 0%;
-  --sidebar-accent: 217 32% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-primary-foreground: 145 50% 6%; /* Deep forest-black for text contrast */
+  --sidebar-accent: 145 35% 20%;
+  --sidebar-accent-foreground: 145 20% 96%;
   --sidebar-ring: 158 82% 43%;
 
-  --popover: 222 47% 8%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 217 32% 17%;
+  /* MODIFIED: Popover matches elevated green card theme */
+  --popover: 145 40% 14%;
+  --popover-foreground: 145 20% 96%;
+  --popover-border: 145 35% 22%;
 
   --primary: 158 82% 43%; /* Neon Green */
-  --primary-foreground: 0 0% 0%;
+  --primary-foreground: 145 50% 6%; /* Deep forest-black for high text contrast */
 
-  --secondary: 217 32% 17%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 145 35% 20%;
+  --secondary-foreground: 145 20% 96%;
 
-  --muted: 217 32% 17%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 145 35% 20%;
+  --muted-foreground: 145 20% 65%;
 
-  --accent: 217 32% 17%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 145 35% 20%;
+  --accent-foreground: 145 20% 96%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
 
-  --input: 217 32% 17%;
+  --input: 145 35% 20%;
   --ring: 158 82% 43%;
-  
+
   --chart-1: 158 82% 43%;
   --chart-2: 0 84% 60%;
   --chart-3: 217 91% 60%;
@@ -129,14 +134,14 @@
   --app-font-mono: 'Fira Code', 'Roboto Mono', Menlo, monospace;
   --radius: 0.5rem;
 
-  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.5);
-  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.5);
-  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.5), 0px 1px 2px -1px hsl(0 0% 0% / 0.5);
-  --shadow: 0px 2px 0px 0px hsl(0 0% 0% / 0.5), 0px 1px 2px -1px hsl(0 0% 0% / 0.5);
-  --shadow-md: 0px 2px 0px 0px hsl(0 0% 0% / 0.5), 0px 2px 4px -1px hsl(0 0% 0% / 0.5);
-  --shadow-lg: 0px 2px 0px 0px hsl(0 0% 0% / 0.5), 0px 4px 6px -1px hsl(0 0% 0% / 0.5);
-  --shadow-xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.5), 0px 8px 10px -1px hsl(0 0% 0% / 0.5);
-  --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.5);
+  --shadow-2xs: 0px 2px 0px 0px hsl(145 50% 3% / 0.4);
+  --shadow-xs: 0px 2px 0px 0px hsl(145 50% 3% / 0.4);
+  --shadow-sm: 0px 2px 0px 0px hsl(145 50% 3% / 0.4), 0px 1px 2px -1px hsl(145 50% 3% / 0.4);
+  --shadow: 0px 2px 0px 0px hsl(145 50% 3% / 0.4), 0px 1px 2px -1px hsl(145 50% 3% / 0.4);
+  --shadow-md: 0px 2px 0px 0px hsl(145 50% 3% / 0.4), 0px 2px 4px -1px hsl(145 50% 3% / 0.4);
+  --shadow-lg: 0px 2px 0px 0px hsl(145 50% 3% / 0.4), 0px 4px 6px -1px hsl(145 50% 3% / 0.4);
+  --shadow-xl: 0px 2px 0px 0px hsl(145 50% 3% / 0.4), 0px 8px 10px -1px hsl(145 50% 3% / 0.4);
+  --shadow-2xl: 0px 2px 0px 0px hsl(145 50% 3% / 0.4);
 }
 
 .dark {
@@ -150,10 +155,11 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    /* MODIFIED: Gradient base now moves from deep dark green into the main background green color */
     background:
-      radial-gradient(circle at top, rgba(0, 255, 136, 0.08), transparent 24%),
-      radial-gradient(circle at right, rgba(59, 130, 246, 0.08), transparent 22%),
-      linear-gradient(180deg, rgba(10, 10, 15, 0.96), rgba(10, 10, 15, 1));
+      radial-gradient(circle at top, rgba(0, 255, 136, 0.12), transparent 30%),
+      radial-gradient(circle at right, rgba(59, 130, 246, 0.08), transparent 25%),
+      linear-gradient(180deg, hsl(145 45% 7%), hsl(145 45% 10%));
   }
 }
 
@@ -177,9 +183,10 @@
   }
 
   .terminal-screen {
+    /* MODIFIED: Background changes to the newly defined rich green card variables */
     background:
       linear-gradient(rgba(0, 255, 136, 0.04), rgba(0, 255, 136, 0.02)),
-      rgba(2, 6, 23, 0.92);
+      hsl(var(--card));
   }
 
   .glitch-text {
@@ -212,6 +219,7 @@
     animation: typing 3.2s steps(40, end), blink 0.8s step-end infinite;
   }
 
+    
   @keyframes typing {
     from { width: 0; }
     to { width: 100%; }
