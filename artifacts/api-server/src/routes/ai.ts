@@ -54,7 +54,7 @@ router.post("/ai/hint", requireAuth, async (req: AuthRequest, res): Promise<void
   for (const s of recentScores) {
     if (!modeAccuracy[s.mode]) modeAccuracy[s.mode] = { correct: 0, total: 0 };
     modeAccuracy[s.mode].total += 1;
-    if (s.isCorrect) modeAccuracy[s.mode].correct += 1;
+    if (s.score > 0) modeAccuracy[s.mode].correct += 1;
   }
   const weakAreas = Object.entries(modeAccuracy)
     .filter(([, v]) => v.total > 0 && v.correct / v.total < 0.65)
@@ -63,7 +63,7 @@ router.post("/ai/hint", requireAuth, async (req: AuthRequest, res): Promise<void
   const memoryContext = weakAreas.length > 0
     ? `\n\nStudent performance note: This student historically struggles with ${weakAreas.join(", ")} scenarios (below 65% accuracy). Tailor your hint to build foundational understanding.`
     : recentScores.length > 5
-    ? `\n\nStudent performance note: This student has a solid track record (${recentScores.filter(s => s.isCorrect).length}/${recentScores.length} recent correct). Give a more nuanced hint that challenges deeper thinking.`
+    ? `\n\nStudent performance note: This student has a solid track record (${recentScores.filter(s => s.score > 0).length}/${recentScores.length} recent correct). Give a more nuanced hint that challenges deeper thinking.`
     : "";
 
   const completion = await openai.chat.completions.create({

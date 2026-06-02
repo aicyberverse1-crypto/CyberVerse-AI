@@ -1,0 +1,5 @@
+- [Security & prod hardening](security-hardening.md) — trust proxy, helmet, CORS, body-size limit, global error handler all in app.ts
+- [Scores table schema](scores-schema.md) — scoresTable has no isCorrect column; use score > 0 as correctness proxy in AI memory routes
+- [Badge types](badge-types.md) — BADGE_DEFS is `as const`; cast user.badges as BadgeKey[] at every call site; do not widen to string[]
+- [Vite code splitting](vite-codesplit.md) — manualChunks splits react/framer-motion/recharts/lucide/radix/tanstack/wouter into named chunks
+- [React app structure](react-app-structure.md) — App.tsx uses React.lazy + Suspense per route; ErrorBoundary class wraps entire tree; ProtectedRoute accepts LazyExoticComponent

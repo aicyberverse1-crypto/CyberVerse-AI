@@ -49,7 +49,7 @@ router.get("/admin/users", requireAdmin, async (req: AuthRequest, res): Promise<
 
 // DELETE /api/admin/users/:id
 router.delete("/admin/users/:id", requireAdmin, async (req: AuthRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params["id"] as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid user ID" }); return; }
   const [target] = await db.select().from(usersTable).where(eq(usersTable.id, id));
   if (!target) { res.status(404).json({ error: "User not found" }); return; }

@@ -116,7 +116,7 @@ export default function Multiplayer() {
               {DIFFICULTIES.map((d) => (
                 <button
                   key={d.id}
-                  onClick={() => setDifficulty(d.id)}
+                  onClick={() => setDifficulty(d.id as MultiplayerChallengeBodyOpponentDifficulty)}
                   className={`text-left px-3 py-2 rounded-lg border transition-all ${
                     difficulty === d.id ? `border-current bg-current/10 ${d.color}` : "border-border text-muted-foreground hover:border-primary/30"
                   }`}
