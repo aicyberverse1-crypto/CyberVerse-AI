@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import fs from "fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -93,10 +95,27 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api", router);
 
-// ─── 404 Handler ──────────────────────────────────────────────────────────────
-app.use((_req: express.Request, res: express.Response) => {
+// ─── Unmatched /api/* → JSON 404 ──────────────────────────────────────────────
+app.use("/api", (_req: express.Request, res: express.Response) => {
   res.status(404).json({ error: "Not found" });
 });
+
+// ─── Static Frontend (production only) ───────────────────────────────────────
+// Serves the Vite-built React app and falls back to index.html for SPA routing
+if (process.env.NODE_ENV === "production") {
+  const staticDir = path.resolve(
+    process.cwd(),
+    process.env.STATIC_DIR ?? "artifacts/cyberverse/dist/public",
+  );
+  if (fs.existsSync(staticDir)) {
+    app.use(express.static(staticDir, { maxAge: "1h", etag: true }));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(staticDir, "index.html"));
+    });
+  } else {
+    logger.warn({ staticDir }, "Static dir not found — frontend will not be served");
+  }
+}
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
