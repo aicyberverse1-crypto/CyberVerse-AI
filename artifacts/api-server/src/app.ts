@@ -100,7 +100,7 @@ app.use("/api", (_req: express.Request, res: express.Response) => {
   res.status(404).json({ error: "Not found" });
 });
 
-// ─── Static Frontend (production only) ───────────────────────────────────────
+// ─── Static Frontend (production only) ─────────────────────────────────────────
 // Serves the Vite-built React app and falls back to index.html for SPA routing
 if (process.env.NODE_ENV === "production") {
   const staticDir = path.resolve(
@@ -109,7 +109,7 @@ if (process.env.NODE_ENV === "production") {
   );
   if (fs.existsSync(staticDir)) {
     app.use(express.static(staticDir, { maxAge: "1h", etag: true }));
-    app.get("*", (_req, res) => {
+    app.get("/:path*", (_req, res) => {
       res.sendFile(path.join(staticDir, "index.html"));
     });
   } else {
@@ -125,3 +125,4 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
 });
 
 export default app;
+
